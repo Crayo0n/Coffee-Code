@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Code - Iniciar Sesión</title>
+    <style>
+        /* Estilos básicos para que se vea como el diseño */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f0eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6f4e37;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .logo span {
+            color: #c49a6c;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d2d2d;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1.5px solid #e0ddd9;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border 0.3s;
+            background: #fafaf9;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #c49a6c;
+            background: white;
+        }
+
+        .form-group input::placeholder {
+            color: #b5b0aa;
+        }
+
+        .options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0 25px;
+            font-size: 13px;
+        }
+
+        .options label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #555;
+            cursor: pointer;
+        }
+
+        .options label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #c49a6c;
+            cursor: pointer;
+        }
+
+        .options a {
+            color: #c49a6c;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .options a:hover {
+            text-decoration: underline;
+        }
+
+        .btn {
+            background: #c49a6c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.3s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            background: #a87d54;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 13px;
+            color: #999;
+        }
+
+        .footer a {
+            color: #c49a6c;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Checkbox personalizado para "Recordarme" (opcional, ya se ve bien así) */
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #c49a6c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo y título -->
+        <div class="logo">☕ <span>COFFEE</span> CODE</div>
+        <h1 class="title">Bienvenido</h1>
+
+        <!-- Formulario -->
+        <form action="#" method="POST">
+            <div class="form-group">
+                <label for="email">CORREO ELECTRÓNICO</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="admin@coffeecode.com" 
+                    value="admin@coffeecode.com"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">CONTRASEÑA</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="password123" 
+                    value="password123"
+                    required
+                >
+            </div>
+
+            <!-- Opciones -->
+            <div class="options">
+                <label>
+                    <input type="checkbox" name="remember" checked> Recordarme
+                </label>
+                <a href="#">¿Olvidaste tu Contraseña?</a>
+            </div>
+
+            <!-- Botón -->
+            <button type="submit" class="btn">Ingresar al Sistema</button>
+        </form>
+
+        <!-- Pie de página (opcional, para enlaces extra) -->
+        <div class="footer">
+            ¿No tienes cuenta? <a href="#">Regístrate aquí</a>
+        </div>
+    </div>
+</body>
+</html>

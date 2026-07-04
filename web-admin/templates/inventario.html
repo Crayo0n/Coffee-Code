@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Code - Inventario</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f0eb;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 260px;
+            background: #6f4e37;
+            color: white;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .sidebar .logo {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .sidebar .logo span {
+            color: #c49a6c;
+        }
+
+        .sidebar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .sidebar .user-info .avatar {
+            width: 45px;
+            height: 45px;
+            background: #c49a6c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: white;
+        }
+
+        .sidebar .user-info .user-details {
+            flex: 1;
+        }
+
+        .sidebar .user-info .user-details .name {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .sidebar .user-info .user-details .role {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* Menú */
+        .sidebar .menu {
+            list-style: none;
+            flex: 1;
+        }
+
+        .sidebar .menu li {
+            margin-bottom: 5px;
+        }
+
+        .sidebar .menu li a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .sidebar .menu li a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .sidebar .menu li a.active {
+            background: #c49a6c;
+            color: white;
+        }
+
+        .sidebar .menu li a svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        /* Logout en sidebar */
+        .sidebar .logout-btn {
+            margin-top: auto;
+            padding: 12px 16px;
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+            font-size: 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+        }
+
+        .sidebar .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .sidebar .logout-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main {
+            flex: 1;
+            padding: 30px 40px;
+        }
+
+        .main .header-top {
+            margin-bottom: 8px;
+        }
+
+        .main .header-top h1 {
+            font-size: 24px;
+            color: #2d2d2d;
+            font-weight: 700;
+        }
+
+        .main .header-top .subtitle {
+            color: #888;
+            font-size: 14px;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        .main .header-top .date {
+            color: #888;
+            font-size: 14px;
+            font-weight: 500;
+            float: right;
+            margin-top: -30px;
+        }
+
+        /* Buscador y botón agregar */
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 20px 0 25px;
+        }
+
+        .header-actions .search-bar {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .header-actions .search-bar input {
+            width: 100%;
+            padding: 10px 16px;
+            border: 1.5px solid #e0ddd9;
+            border-radius: 10px;
+            font-size: 14px;
+            background: white;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .header-actions .search-bar input:focus {
+            border-color: #c49a6c;
+        }
+
+        .header-actions .search-bar input::placeholder {
+            color: #b5b0aa;
+        }
+
+        .btn-agregar {
+            background: #c49a6c;
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn-agregar:hover {
+            background: #a87d54;
+        }
+
+        /* ===== TABLA ===== */
+        .table-container {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 800px;
+        }
+
+        thead {
+            background: #f8f5f2;
+            border-radius: 10px;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 12px 14px;
+            color: #6f4e37;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e8e0d8;
+        }
+
+        tbody td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f0ece8;
+            color: #444;
+            vertical-align: middle;
+        }
+
+        tbody tr:hover {
+            background: #faf8f6;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .producto-imagen {
+            width: 55px;
+            height: 55px;
+            border-radius: 10px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .producto-imagen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .producto-imagen-placeholder {
+            width: 55px;
+            height: 55px;
+            border-radius: 10px;
+            background: #f0ece8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .producto-imagen-placeholder svg {
+            width: 30px;
+            height: 30px;
+            fill: #c49a6c;
+        }
+
+        .producto-nombre {
+            font-weight: 600;
+            color: #2d2d2d;
+        }
+
+        .producto-precio {
+            font-weight: 600;
+            color: #c49a6c;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .badge-disponible {
+            background: #e8f8e8;
+            color: #27ae60;
+        }
+
+        .badge-agotado {
+            background: #fde8e8;
+            color: #c0392b;
+        }
+
+        .badge-baja {
+            background: #fff3e0;
+            color: #e67e22;
+        }
+
+        .badge-bebida-caliente {
+            background: #fce4ec;
+            color: #c62828;
+        }
+
+        .badge-bebida-fria {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .badge-postre {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .badge-comida {
+            background: #e0f7fa;
+            color: #00838f;
+        }
+
+        .badge-otros {
+            background: #f5f5f5;
+            color: #616161;
+        }
+
+        .acciones-btns {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .acciones-btns button {
+            padding: 5px 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .acciones-btns .btn-editar {
+            background: #f0ece8;
+            color: #6f4e37;
+        }
+
+        .acciones-btns .btn-editar:hover {
+            background: #e0ddd9;
+        }
+
+        .acciones-btns .btn-eliminar {
+            background: #fde8e8;
+            color: #c0392b;
+        }
+
+        .acciones-btns .btn-eliminar:hover {
+            background: #fcd5d5;
+        }
+
+        /* ===== MODAL / OVERLAY ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px 35px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalFade 0.3s ease;
+        }
+
+        @keyframes modalFade {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-content .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0ece8;
+        }
+
+        .modal-content .modal-header h2 {
+            font-size: 20px;
+            color: #2d2d2d;
+            font-weight: 700;
+        }
+
+        .modal-content .modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 0 8px;
+            transition: color 0.3s;
+        }
+
+        .modal-content .modal-header .close-btn:hover {
+            color: #c0392b;
+        }
+
+        .modal-content .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #6f4e37;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .modal-content .form-group {
+            margin-bottom: 16px;
+        }
+
+        .modal-content .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .modal-content .form-group label .required {
+            color: #c0392b;
+            margin-left: 2px;
+        }
+
+        .modal-content .form-group input,
+        .modal-content .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #e0ddd9;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fafaf9;
+            outline: none;
+            transition: border 0.3s;
+            font-family: inherit;
+            color: #2d2d2d;
+        }
+
+        .modal-content .form-group input:focus,
+        .modal-content .form-group select:focus {
+            border-color: #c49a6c;
+            background: white;
+        }
+
+        .modal-content .form-group input::placeholder {
+            color: #b5b0aa;
+        }
+
+        .modal-content .form-group select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 35px;
+            cursor: pointer;
+        }
+
+        .upload-area {
+            border: 2px dashed #e0ddd9;
+            border-radius: 8px;
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafaf9;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-area:hover {
+            border-color: #c49a6c;
+            background: #f8f5f2;
+        }
+
+        .upload-area .icon {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .upload-area .text {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .upload-area .text strong {
+            color: #6f4e37;
+        }
+
+        .upload-area .recomendado {
+            font-size: 11px;
+            color: #b5b0aa;
+            margin-top: 3px;
+            display: block;
+        }
+
+        .upload-area img {
+            max-width: 100%;
+            max-height: 150px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .upload-area .remove-image {
+            margin-top: 8px;
+            background: #fde8e8;
+            color: #c0392b;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .upload-area .remove-image:hover {
+            background: #fcd5d5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .modal-actions .btn {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.3px;
+        }
+
+        .modal-actions .btn-cancelar {
+            background: #f0ece8;
+            color: #6f4e37;
+        }
+
+        .modal-actions .btn-cancelar:hover {
+            background: #e0ddd9;
+        }
+
+        .modal-actions .btn-guardar {
+            background: #c49a6c;
+            color: white;
+        }
+
+        .modal-actions .btn-guardar:hover {
+            background: #a87d54;
+        }
+
+        /* Mensajes de notificación */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2d2d2d;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+        }
+
+        .toast.success {
+            background: #27ae60;
+        }
+
+        .toast.error {
+            background: #c0392b;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                min-height: auto;
+                position: relative;
+                padding: 20px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .sidebar .logo {
+                margin-bottom: 0;
+                padding-bottom: 0;
+                border-bottom: none;
+                font-size: 18px;
+                flex: 1;
+            }
+
+            .sidebar .user-info {
+                margin-bottom: 0;
+                padding: 10px;
+                width: 100%;
+                order: 3;
+            }
+
+            .sidebar .menu {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+                width: 100%;
+                order: 2;
+            }
+
+            .sidebar .menu li {
+                margin-bottom: 0;
+            }
+
+            .sidebar .menu li a {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+
+            .sidebar .logout-btn {
+                margin-top: 0;
+                border-top: none;
+                padding-top: 0;
+                order: 4;
+                width: 100%;
+            }
+
+            .main {
+                padding: 20px;
+            }
+
+            .main .header-top .date {
+                float: none;
+                display: block;
+                margin-top: 5px;
+            }
+
+            .header-actions {
+                flex-direction: column;
+            }
+
+            .header-actions .search-bar {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .btn-agregar {
+                width: 100%;
+                text-align: center;
+            }
+
+            .modal-content {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .modal-actions .btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .toast {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 500px) {
+            table {
+                font-size: 13px;
+                min-width: 650px;
+            }
+
+            thead th,
+            tbody td {
+                padding: 10px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <div class="logo">☕ <span>COFFEE</span> CODE</div>
+
+        <div class="user-info">
+            <div class="avatar">MR</div>
+            <div class="user-details">
+                <div class="name">M. Rodríguez</div>
+                <div class="role">Admin Principal</div>
+            </div>
+        </div>
+
+        <ul class="menu">
+            <li>
+                <a href="dashboard.html">
+                    <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                    Inicio
+                </a>
+            </li>
+            <li>
+                <a href="personal.html">
+                    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    Personal
+                </a>
+            </li>
+            <li>
+                <a href="inventario.html" class="active">
+                    <svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+                    Inventario
+                </a>
+            </li>
+            <li>
+                <a href="estadisticas.html">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                    Estadísticas
+                </a>
+            </li>
+        </ul>
+
+        <a href="login.html" class="logout-btn">
+            <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+            Cerrar Sesión
+        </a>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main">
+        <div class="header-top">
+            <h1>Inventario de Productos</h1>
+            <p class="subtitle">Gestione los productos, precios y disponibilidad del menú.</p>
+            <span class="date">03 de Julio, 2026</span>
+        </div>
+
+        <!-- Buscador y botón agregar -->
+        <div class="header-actions">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="buscarProductos()">
+            </div>
+            <button class="btn-agregar" onclick="abrirModal()">+ Agregar Producto</button>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Foto</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Disponibilidad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaProductos">
+                    <!-- Los productos se cargan aquí mediante JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- ===== MODAL / OVERLAY ===== -->
+    <div class="modal-overlay" id="modalRegistrar">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitulo">Registrar Nuevo Producto</h2>
+                <button class="close-btn" onclick="cerrarModal()">✕</button>
+            </div>
+
+            <form id="formProducto" onsubmit="guardarProducto(event)">
+                <div class="section-title">Detalles del Producto</div>
+
+                <!-- Subir imagen -->
+                <div class="form-group">
+                    <label>Foto del Producto</label>
+                    <div class="upload-area" id="uploadArea">
+                        <span class="icon" id="uploadIcon">📷</span>
+                        <span class="text" id="uploadText"><strong>Subir Imagen</strong></span>
+                        <span class="recomendado" id="uploadRecomendado">Recomendado: 1:1, JPG o PNG</span>
+                        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="previewImage(event)">
+                    </div>
+                </div>
+
+                <!-- ID oculto para edición -->
+                <input type="hidden" id="productoId" value="">
+
+                <!-- Nombre del producto -->
+                <div class="form-group">
+                    <label for="nombre">Nombre del Producto <span class="required">*</span></label>
+                    <input type="text" id="nombre" placeholder="Ej: Espresso con Hielo" required>
+                </div>
+
+                <!-- Precio de venta -->
+                <div class="form-group">
+                    <label for="precio">Precio de Venta ($) <span class="required">*</span></label>
+                    <input type="number" id="precio" placeholder="Ej: 45.00" step="0.01" required>
+                </div>
+
+                <div class="section-title">Clasificación y Disponibilidad</div>
+
+                <!-- Categoría -->
+                <div class="form-group">
+                    <label for="categoria">Categoría <span class="required">*</span></label>
+                    <select id="categoria" required>
+                        <option value="">Selecciona una categoría...</option>
+                        <option value="bebida-caliente">Bebida Caliente</option>
+                        <option value="bebida-fria">Bebida Fría</option>
+                        <option value="postre">Postre</option>
+                        <option value="comida">Comida</option>
+                        <option value="otros">Otros</option>
+                    </select>
+                </div>
+
+                <!-- Disponibilidad inicial -->
+                <div class="form-group">
+                    <label for="disponibilidad">Disponibilidad Inicial <span class="required">*</span></label>
+                    <select id="disponibilidad" required>
+                        <option value="disponible">Disponible</option>
+                        <option value="bajo-stock">Bajo Stock</option>
+                        <option value="agotado">Agotado</option>
+                    </select>
+                </div>
+
+                <!-- Botones -->
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-guardar" id="btnGuardar">Guardar Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ===== VARIABLES GLOBALES =====
+        let productos = [];
+        let contadorId = 6;
+        let imagenBase64 = null;
+
+        // ===== PRODUCTOS DE EJEMPLO =====
+        const productosEjemplo = [
+            {
+                id: 1,
+                nombre: "Capuchino Italiano",
+                precio: 55.00,
+                categoria: "bebida-caliente",
+                disponibilidad: "disponible",
+                imagen: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=100&h=100&fit=crop"
+            },
+            {
+                id: 2,
+                nombre: "Espresso con Hielo",
+                precio: 45.00,
+                categoria: "bebida-fria",
+                disponibilidad: "disponible",
+                imagen: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=100&h=100&fit=crop"
+            },
+            {
+                id: 3,
+                nombre: "Muffin de Vainilla",
+                precio: 35.00,
+                categoria: "postre",
+                disponibilidad: "agotado",
+                imagen: "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=100&h=100&fit=crop"
+            },
+            {
+                id: 4,
+                nombre: "Croissant de Chocolate",
+                precio: 30.00,
+                categoria: "postre",
+                disponibilidad: "bajo-stock",
+                imagen: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=100&h=100&fit=crop"
+            },
+            {
+                id: 5,
+                nombre: "Sándwich de Pollo",
+                precio: 65.00,
+                categoria: "comida",
+                disponibilidad: "disponible",
+                imagen: null
+            }
+        ];
+
+        // ===== INICIALIZAR =====
+        function init() {
+            productos = [...productosEjemplo];
+            renderizarTabla();
+            
+            // Evento para el área de subida de imagen
+            document.getElementById('uploadArea').addEventListener('click', function(e) {
+                // Si el clic fue en el botón de eliminar, no abrir el selector
+                if (e.target.classList.contains('remove-image')) {
+                    return;
+                }
+                document.getElementById('fileInput').click();
+            });
+        }
+
+        // ===== RENDERIZAR TABLA =====
+        function renderizarTabla() {
+            const tbody = document.getElementById('tablaProductos');
+            tbody.innerHTML = '';
+
+            if (productos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 30px; color: #999;">
+                            No hay productos registrados. Haz clic en "Agregar Producto" para crear uno.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            productos.forEach(producto => {
+                const fila = document.createElement('tr');
+                fila.dataset.id = producto.id;
+
+                // Imagen
+                let imagenHtml = '';
+                if (producto.imagen) {
+                    imagenHtml = `<img src="${producto.imagen}" alt="${producto.nombre}">`;
+                } else {
+                    imagenHtml = `
+                        <svg viewBox="0 0 24 24" fill="#c49a6c">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                            <path d="M8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                        </svg>
+                    `;
+                }
+
+                const badgeCategoria = {
+                    'bebida-caliente': 'badge-bebida-caliente',
+                    'bebida-fria': 'badge-bebida-fria',
+                    'postre': 'badge-postre',
+                    'comida': 'badge-comida',
+                    'otros': 'badge-otros'
+                };
+
+                const badgeDisponibilidad = {
+                    'disponible': 'badge-disponible',
+                    'bajo-stock': 'badge-baja',
+                    'agotado': 'badge-agotado'
+                };
+
+                const nombreCategoria = {
+                    'bebida-caliente': 'Bebida Caliente',
+                    'bebida-fria': 'Bebida Fría',
+                    'postre': 'Postre',
+                    'comida': 'Comida',
+                    'otros': 'Otros'
+                };
+
+                const nombreDisponibilidad = {
+                    'disponible': 'Disponible',
+                    'bajo-stock': 'Bajo Stock',
+                    'agotado': 'Agotado'
+                };
+
+                fila.innerHTML = `
+                    <td>
+                        <div class="producto-imagen">
+                            ${imagenHtml}
+                        </div>
+                    </td>
+                    <td><div class="producto-nombre">${producto.nombre}</div></td>
+                    <td><span class="badge ${badgeCategoria[producto.categoria] || 'badge-otros'}">${nombreCategoria[producto.categoria] || producto.categoria}</span></td>
+                    <td><span class="producto-precio">$${producto.precio.toFixed(2)}</span></td>
+                    <td><span class="badge ${badgeDisponibilidad[producto.disponibilidad] || 'badge-disponible'}">${nombreDisponibilidad[producto.disponibilidad] || producto.disponibilidad}</span></td>
+                    <td>
+                        <div class="acciones-btns">
+                            <button class="btn-editar" onclick="editarProducto(${producto.id})">Editar</button>
+                            <button class="btn-eliminar" onclick="eliminarProducto(${producto.id})">Eliminar</button>
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(fila);
+            });
+        }
+
+        // ===== BUSCAR PRODUCTOS =====
+        function buscarProductos() {
+            const busqueda = document.getElementById('searchInput').value.toLowerCase();
+            const filas = document.querySelectorAll('#tablaProductos tr');
+
+            if (filas.length === 0 || (filas.length === 1 && filas[0].colSpan)) {
+                return;
+            }
+
+            filas.forEach(fila => {
+                const nombre = fila.querySelector('.producto-nombre');
+                if (nombre) {
+                    const texto = nombre.textContent.toLowerCase();
+                    if (texto.includes(busqueda)) {
+                        fila.style.display = '';
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // ===== ABRIR MODAL =====
+        function abrirModal() {
+            document.getElementById('modalTitulo').textContent = 'Registrar Nuevo Producto';
+            document.getElementById('btnGuardar').textContent = 'Guardar Producto';
+            document.getElementById('formProducto').reset();
+            document.getElementById('productoId').value = '';
+            document.getElementById('categoria').value = '';
+            document.getElementById('disponibilidad').value = 'disponible';
+            imagenBase64 = null;
+            resetUploadArea();
+            document.getElementById('modalRegistrar').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // ===== CERRAR MODAL =====
+        function cerrarModal() {
+            document.getElementById('modalRegistrar').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            document.getElementById('formProducto').reset();
+            imagenBase64 = null;
+            resetUploadArea();
+        }
+
+        // ===== RESET UPLOAD AREA =====
+        function resetUploadArea() {
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.innerHTML = `
+                <span class="icon" id="uploadIcon">📷</span>
+                <span class="text" id="uploadText"><strong>Subir Imagen</strong></span>
+                <span class="recomendado" id="uploadRecomendado">Recomendado: 1:1, JPG o PNG</span>
+                <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="previewImage(event)">
+            `;
+            document.getElementById('fileInput').value = '';
+        }
+
+        // ===== PREVIEW IMAGEN =====
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagenBase64 = e.target.result;
+                    const uploadArea = document.getElementById('uploadArea');
+                    uploadArea.innerHTML = `
+                        <img src="${imagenBase64}" alt="Vista previa">
+                        <button type="button" class="remove-image" onclick="eliminarImagen(event)">Eliminar Imagen</button>
+                        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="previewImage(event)">
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // ===== ELIMINAR IMAGEN =====
+        function eliminarImagen(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            imagenBase64 = null;
+            document.getElementById('fileInput').value = '';
+            resetUploadArea();
+        }
+
+        // ===== GUARDAR PRODUCTO =====
+        function guardarProducto(event) {
+            event.preventDefault();
+
+            const nombre = document.getElementById('nombre').value.trim();
+            const precio = parseFloat(document.getElementById('precio').value);
+            const categoria = document.getElementById('categoria').value;
+            const disponibilidad = document.getElementById('disponibilidad').value;
+            const id = document.getElementById('productoId').value;
+
+            // Validaciones
+            if (!nombre) {
+                mostrarToast('Por favor ingresa el nombre del producto', 'error');
+                return;
+            }
+            if (isNaN(precio) || precio <= 0) {
+                mostrarToast('Por favor ingresa un precio válido', 'error');
+                return;
+            }
+            if (!categoria) {
+                mostrarToast('Por favor selecciona una categoría', 'error');
+                return;
+            }
+
+            // Si es edición
+            if (id) {
+                const index = productos.findIndex(p => p.id === parseInt(id));
+                if (index !== -1) {
+                    productos[index].nombre = nombre;
+                    productos[index].precio = precio;
+                    productos[index].categoria = categoria;
+                    productos[index].disponibilidad = disponibilidad;
+                    if (imagenBase64) {
+                        productos[index].imagen = imagenBase64;
+                    }
+                    mostrarToast('Producto actualizado correctamente', 'success');
+                }
+            } else {
+                // Nuevo producto
+                const nuevoProducto = {
+                    id: ++contadorId,
+                    nombre: nombre,
+                    precio: precio,
+                    categoria: categoria,
+                    disponibilidad: disponibilidad,
+                    imagen: imagenBase64 || null
+                };
+                productos.push(nuevoProducto);
+                mostrarToast('Producto agregado correctamente', 'success');
+            }
+
+            renderizarTabla();
+            cerrarModal();
+        }
+
+        // ===== EDITAR PRODUCTO =====
+        function editarProducto(id) {
+            const producto = productos.find(p => p.id === id);
+            if (!producto) return;
+
+            document.getElementById('modalTitulo').textContent = 'Editar Producto';
+            document.getElementById('btnGuardar').textContent = 'Actualizar Producto';
+            document.getElementById('productoId').value = id;
+            document.getElementById('nombre').value = producto.nombre;
+            document.getElementById('precio').value = producto.precio;
+            document.getElementById('categoria').value = producto.categoria;
+            document.getElementById('disponibilidad').value = producto.disponibilidad;
+
+            // Mostrar imagen actual
+            if (producto.imagen) {
+                imagenBase64 = producto.imagen;
+                const uploadArea = document.getElementById('uploadArea');
+                uploadArea.innerHTML = `
+                    <img src="${producto.imagen}" alt="Vista previa">
+                    <button type="button" class="remove-image" onclick="eliminarImagen(event)">Eliminar Imagen</button>
+                    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="previewImage(event)">
+                `;
+            } else {
+                imagenBase64 = null;
+                resetUploadArea();
+            }
+
+            document.getElementById('modalRegistrar').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // ===== ELIMINAR PRODUCTO =====
+        function eliminarProducto(id) {
+            if (confirm('¿Estás seguro de eliminar este producto?')) {
+                productos = productos.filter(p => p.id !== id);
+                renderizarTabla();
+                mostrarToast('Producto eliminado correctamente', 'success');
+            }
+        }
+
+        // ===== MOSTRAR TOAST =====
+        function mostrarToast(mensaje, tipo = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo}`;
+            toast.textContent = mensaje;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // ===== CERRAR MODAL AL HACER CLIC FUERA =====
+        document.getElementById('modalRegistrar').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModal();
+            }
+        });
+
+        // ===== INICIAR =====
+        init();
+    </script>
+</body>
+</html>
