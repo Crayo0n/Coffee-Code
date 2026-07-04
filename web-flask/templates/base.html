@@ -49,6 +49,14 @@
               <span>Inventario</span>
             </a>
           </li>
+          <li class="navbar-menu-item {% if active_page == 'mesas' %}active{% endif %}" data-tab="tab-mesas">
+            <a href="/mesas">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
+              </svg>
+              <span>Mesas</span>
+            </a>
+          </li>
           <li class="navbar-menu-item {% if active_page == 'estadisticas' %}active{% endif %}" data-tab="tab-estadisticas">
             <a href="/estadisticas">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -165,6 +173,25 @@
   </div>
 
   <!-- ==========================================
+       MODAL DE CONFIRMACIÓN GLOBAL
+       ========================================== -->
+  <div class="modal-overlay" id="globalConfirmModalOverlay">
+    <div class="modal-card" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 id="confirmModalTitle">Confirmar Acción</h3>
+        <button class="btn-close-modal" onclick="closeConfirmModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <p id="confirmModalMessage" style="color: var(--color-text); margin-bottom: 20px;">¿Estás seguro de continuar?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancelar</button>
+        <a id="confirmModalActionBtn" href="#" class="btn btn-primary" style="background-color: var(--color-danger); text-decoration: none;">Eliminar</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
        TOAST DE NOTIFICACIÓN (Flash Messages)
        ========================================== -->
   <div class="toast-notification" id="toastNotification" data-type="success">
@@ -174,6 +201,11 @@
     <span id="toastMessage">Operación realizada con éxito</span>
   </div>
 
+  <!-- Librerías de Exportación (PDF y Excel) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
   <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 
   {# ---- Flash Messages de Flask ---- #}

@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Mesas - Coffee-Code{% endblock %}
+
+{% block content %}
+<section id="tab-mesas" class="dashboard-tab-content active">
+  <div class="header-panel">
+    <div>
+      <h1>Gestión de Mesas</h1>
+      <p>Administra las mesas del restaurante. Puedes agregar nuevas mesas o eliminar las existentes.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openMesaModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      <span>Agregar Mesa</span>
+    </button>
+  </div>
+
+  <div class="dashboard-card" style="margin-bottom: 25px; padding: 20px;">
+    <!-- Tabla de mesas -->
+    <div class="table-responsive">
+      <table class="elegant-table" id="mesasTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Número de Mesa</th>
+            <th>Estado Actual</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if not mesas %}
+          <tr>
+            <td colspan="4" style="text-align: center; color: var(--color-muted); padding: 20px;">No hay mesas registradas</td>
+          </tr>
+          {% else %}
+            {% for mesa in mesas %}
+            <tr>
+              <td>#{{ mesa.id }}</td>
+              <td>
+                <div class="user-cell">
+                  <div class="user-cell-avatar" style="background-color: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px;">
+                    M{{ mesa.number }}
+                  </div>
+                  <div class="user-cell-info">
+                    <h4>Mesa {{ mesa.number }}</h4>
+                  </div>
+                </div>
+              </td>
+              <td>
+                {% if mesa.status.lower() == 'libre' %}
+                  <span class="status-badge status-active">LIBRE</span>
+                {% elif mesa.status.lower() == 'ocupada' %}
+                  <span class="status-badge status-inactive">OCUPADA</span>
+                {% else %}
+                  <span class="status-badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">{{ mesa.status.upper() }}</span>
+                {% endif %}
+              </td>
+              <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+                <a class="btn-icon" style="color: var(--color-danger);" title="Eliminar Mesa" href="#" onclick="event.preventDefault(); showConfirmModal('Eliminar Mesa', '¿Estás seguro de eliminar la Mesa {{ mesa.number }}?', '/mesas/eliminar/{{ mesa.id }}');">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     MODAL: AGREGAR MESA
+     ========================================== -->
+<div class="modal-overlay" id="mesaModalOverlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalMesaTitle">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22" style="color: var(--color-primary); flex-shrink: 0; margin-right: 8px;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Agregar Nueva Mesa</span>
+      </h3>
+      <button class="btn-close-modal" onclick="closeMesaModal()">&times;</button>
+    </div>
+    <form id="mesaRegisterForm" method="POST" action="/mesas/crear">
+      <div class="modal-body">
+        
+        <div class="modal-section">
+          <div class="modal-section-title">Información de la Mesa</div>
+          
+          <div class="form-group">
+            <label for="mesaNumber">Número de la Mesa</label>
+            <input type="number" id="mesaNumber" name="number" placeholder="Ej: 1, 2, 3..." required min="1">
+          </div>
+          
+          <input type="hidden" name="status" value="Libre">
+          
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeMesaModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Mesa</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openMesaModal() {
+    document.getElementById('mesaModalOverlay').classList.add('active');
+    document.getElementById('mesaRegisterForm').reset();
+  }
+
+  function closeMesaModal() {
+    document.getElementById('mesaModalOverlay').classList.remove('active');
+  }
+</script>
+{% endblock %}

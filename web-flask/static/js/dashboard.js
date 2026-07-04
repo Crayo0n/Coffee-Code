@@ -363,13 +363,87 @@ function showToast(message, type) {
   }, 4000);
 }
 
-function triggerReportDownload(reportName, format) {
-  showToast(`✓ Descargando ${reportName} en formato ${format}...`);
-}
+function triggerReportDownload(reportName, format, tableId) {
+  const table = document.getElementById(tableId);
+  if (!table && tableId) {
+    showToast(`Error: No se encontraron los datos para el reporte.`, 'error');
+    return;
+  }
 
-function simulateChartUpdate() {
-  const select = document.getElementById("statRange");
-  if (select) {
-    showToast(`Filtrando datos analíticos por periodo: ${select.value}`);
+  showToast(`Generando ${reportName} en formato ${format}...`, 'success');
+  const dateStr = new Date().toISOString().split('T')[0];
+  const filename = `${reportName}_${dateStr}`;
+
+  if (format === 'Excel') {
+    try {
+      if (typeof XLSX === 'undefined') throw new Error("Librería SheetJS no cargada.");
+      const wb = XLSX.utils.table_to_book(table, { sheet: "Reporte" });
+      XLSX.writeFile(wb, `${filename}.xlsx`);
+      setTimeout(() => showToast(`✓ Archivo Excel generado con éxito`, 'success'), 1500);
+    } catch (err) {
+      console.error(err);
+      showToast('Error al generar el archivo Excel', 'error');
+    }
+  } else if (format === 'PDF') {
+    try {
+      if (!window.jspdf) throw new Error("Librería jsPDF no cargada.");
+      
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('landscape');
+      
+      const title = reportName.replace(/_/g, ' ');
+      doc.setFontSize(18);
+      doc.setTextColor(56, 37, 25); // #382519
+      doc.text(title, 14, 22);
+      
+      doc.autoTable({
+        html: `#${tableId}`,
+        startY: 30,
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [144, 105, 74], // Color principal café (#90694a)
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 4,
+          textColor: [51, 51, 51]
+        }
+      });
+      
+      doc.save(`${filename}.pdf`);
+      showToast(`✓ Archivo PDF generado con éxito`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Error al generar el archivo PDF', 'error');
+    }
   }
 }
+
+// ==========================================
+// MODAL DE CONFIRMACIÓN GLOBAL
+// ==========================================
+function showConfirmModal(title, message, actionUrl) {
+  const overlay = document.getElementById('globalConfirmModalOverlay');
+  if (overlay) {
+    document.getElementById('confirmModalTitle').innerText = title;
+    document.getElementById('confirmModalMessage').innerText = message;
+    
+    const actionBtn = document.getElementById('confirmModalActionBtn');
+    actionBtn.href = actionUrl;
+    
+    overlay.classList.add('active');
+  } else {
+    // Fallback if modal HTML is not present
+    if (confirm(message)) {
+      window.location.href = actionUrl;
+    }
+  }
+}
+
+function closeConfirmModal() {
+  const overlay = document.getElementById('globalConfirmModalOverlay');
+  if (overlay) overlay.classList.remove('active');
+}
+
