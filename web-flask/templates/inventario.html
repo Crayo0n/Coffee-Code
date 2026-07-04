@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventario de Productos - Coffee-Code{% endblock %}
+
+{% block content %}
+<section id="tab-inventario" class="dashboard-tab-content active">
+  <div class="header-panel">
+    <div>
+      <h1>Inventario de Productos</h1>
+      <p>Controla de manera ágil las bebidas, postres y alimentos del catálogo del menú.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn btn-secondary" onclick="openCategoryModal()" style="display: flex; align-items: center; gap: 6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a0 0 0 014-4z" />
+        </svg>
+        <span>Categorías</span>
+      </button>
+      <button class="btn btn-primary" onclick="openProductModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+        </svg>
+        <span>Agregar Producto</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla de Catálogo Ocupa el 100% del Ancho -->
+  <div class="dashboard-card" style="padding: 20px;">
+    <div class="table-toolbar">
+      <div class="search-box">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" placeholder="Buscar producto..." id="productInputSearch" onkeyup="filterProductsTable()">
+      </div>
+      <div class="toolbar-filters">
+        <select id="productCategoryFilter" onchange="filterProductsTable()">
+          <option value="ALL">Todas las Categorías</option>
+          <option value="BEBIDA_CALIENTE">Bebidas Calientes</option>
+          <option value="BEBIDA_FRIA">Bebidas Frías</option>
+          <option value="REPOSTERIA">Repostería</option>
+          <option value="OTROS">Otros</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="elegant-table" id="productsTable">
+        <thead>
+          <tr>
+            <th>Foto</th>
+            <th>Producto</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Disponibilidad</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="productsTableBody">
+          {% if not products %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--color-muted); padding: 20px;">No hay productos registrados en el catálogo</td>
+          </tr>
+          {% else %}
+            {% for product in products %}
+            <tr>
+              <td>
+                <div class="product-photo-thumbnail" style="width: 45px; height: 45px; border-radius: 12px; overflow: hidden; background-color: var(--color-border);">
+                  {% if product.photo %}
+                    <img src="{{ product.photo }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                  {% else %}
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--color-muted); font-weight: bold;">CC</div>
+                  {% endif %}
+                </div>
+              </td>
+              <td style="font-weight: 700;">{{ product.name }}</td>
+              <td>
+                <span class="badge" style="background-color: var(--color-secondary); color: var(--color-dark); font-size: 0.75rem; font-weight: 600;">
+                  {{ product.categoria.name if product.categoria else "General" }}
+                </span>
+              </td>
+              <td style="font-weight: 700; color: #4e6b62;">${{ "%.2f"|format(product.price) }}</td>
+              <td>
+                {% if product.estado and product.estado.name == 'disponible' %}
+                  <span class="status-badge status-active">DISPONIBLE</span>
+                {% else %}
+                  <span class="status-badge status-inactive">NO DISPONIBLE</span>
+                {% endif %}
+              </td>
+              <td style="text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn-icon" style="color: var(--color-primary);" title="Editar Producto"
+                  onclick="openEditProductModal({{ product.id }}, '{{ product.name }}', {{ product.price }}, {{ product.category_id if product.category_id else 0 }}, {{ product.status_id if product.status_id else 1 }}, '{{ product.photo or '' }}')">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <a class="btn-icon" style="color: var(--color-danger);" title="Eliminar Producto" href="/inventario/eliminar/{{ product.id }}" onclick="return confirm('¿Estás seguro de eliminar a {{ product.name }}?');">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================
+     MODAL: AGREGAR O EDITAR PRODUCTO
+     ========================================== -->
+<div class="modal-overlay" id="productModalOverlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalProductTitle">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22" style="color: var(--color-primary); flex-shrink: 0; margin-right: 8px;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+        <span id="modalProductTitleText">Registrar Nuevo Producto</span>
+      </h3>
+      <button class="btn-close-modal" onclick="closeProductModal()">&times;</button>
+    </div>
+    <form id="productRegisterForm" method="POST" action="/inventario/crear">
+      <input type="hidden" id="editProductId" name="_product_id" value="">
+      <div class="modal-body">
+        
+        <!-- Sección 1: Información Básica del Producto -->
+        <div class="modal-section">
+          <div class="modal-section-title">Detalles del Producto</div>
+          
+          <div class="form-group">
+            <label>Foto del Producto</label>
+            <div class="photo-upload-container">
+              <div class="photo-preview-square" id="productPhotoPreview">
+              </div>
+              <div class="upload-btn-wrapper">
+                <label class="btn-upload" for="newProductPhotoFile">Subir Imagen</label>
+                <input type="file" id="newProductPhotoFile" accept="image/*" onchange="previewProductPhoto(event)">
+                <span class="upload-instructions">Recomendado: 1:1, JPG o PNG</span>
+              </div>
+              <input type="hidden" id="newProductPhotoData" name="photo">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="newProductName">Nombre del Producto</label>
+            <input type="text" id="newProductName" name="name" placeholder="Ej: Espresso con Hielo" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="newProductPrice">Precio de Venta ($)</label>
+            <input type="number" step="0.01" id="newProductPrice" name="price" placeholder="Ej: 45.00" required>
+          </div>
+        </div>
+
+        <!-- Sección 2: Configuración de Categoría y Estado -->
+        <div class="modal-section">
+          <div class="modal-section-title">Clasificación y Disponibilidad</div>
+          
+          <div class="form-group">
+            <label for="newProductCategory">Categoría</label>
+            <select id="newProductCategory" name="category_id" required>
+              <option value="" disabled selected>Selecciona una categoría...</option>
+              {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="newProductStatus">Disponibilidad Inicial</label>
+            <select id="newProductStatus" name="status_id" required>
+              <option value="1">Disponible</option>
+              <option value="2">No Disponible</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Producto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==========================================
+     MODAL: GESTIONAR CATEGORÍAS
+     ========================================== -->
+<div class="modal-overlay" id="categoryModalOverlay">
+  <div class="modal-card" style="max-width: 480px;">
+    <div class="modal-header">
+      <h3>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22" style="color: var(--color-primary); flex-shrink: 0; margin-right: 8px;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+        <span>Gestionar Categorías</span>
+      </h3>
+      <button class="btn-close-modal" onclick="closeCategoryModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Lista de categorías existentes -->
+      <div class="modal-section">
+        <div class="modal-section-title">Categorías Registradas</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; padding-right: 4px;">
+          {% for cat in categories %}
+          <div style="display: flex; align-items: center; justify-content: space-between; background: var(--color-secondary); padding: 8px 14px; border-radius: 10px;">
+            <span style="font-weight: 600; font-size: 0.9rem; color: var(--color-dark);">{{ cat.name }}</span>
+            <a href="/categorias/eliminar/{{ cat.id }}"
+               onclick="return confirm('¿Eliminar la categoría {{ cat.name }}? Los productos asignados quedarán sin categoría.');"
+               style="color: var(--color-danger); display: flex; align-items: center;" title="Eliminar categoría">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </a>
+          </div>
+          {% else %}
+          <p style="color: var(--color-muted); font-size: 0.85rem; text-align: center; padding: 10px;">No hay categorías registradas aún.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Formulario nueva categoría -->
+      <div class="modal-section">
+        <div class="modal-section-title">Nueva Categoría</div>
+        <form id="newCategoryForm" method="POST" action="/categorias/crear">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="newCategoryName">Nombre de la Categoría</label>
+            <div style="display: flex; gap: 10px; align-items: flex-end;">
+              <input type="text" id="newCategoryName" name="name" placeholder="Ej: Bebidas Frías" required style="flex: 1;">
+              <button type="submit" class="btn btn-primary" style="padding: 10px 18px; white-space: nowrap;">+ Agregar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeCategoryModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
