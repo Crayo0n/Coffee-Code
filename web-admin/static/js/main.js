@@ -1,5 +1,5 @@
 // ==========================================
-// SIMULADOR DE DATOS DE COFEE-CODE
+// SIMULADOR DE DATOS DE COFFEE-CODE
 // ==========================================
 
 // Colaboradores iniciales
@@ -13,6 +13,34 @@ let users = [
   { name: "Saul Ongay Silva", email: "saul@cofeecode.com", role: "MESERO", status: "activo" },
   { name: "Manuel David Tovar", email: "manuel@cofeecode.com", role: "CAJA", status: "inactivo" }
 ];
+
+let editingUserIndex = null;
+
+// Catálogo de Productos Iniciales (Figma Style Mock)
+let products = [
+  { name: "Capuchino Italiano", price: 55.00, category: "BEBIDA_CALIENTE", status: "disponible", photo: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=150&auto=format&fit=crop&q=80" },
+  { name: "Espresso Frío Cream", price: 50.00, category: "BEBIDA_FRIA", status: "disponible", photo: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=150&auto=format&fit=crop&q=80" },
+  { name: "Macarrón de Café", price: 25.00, category: "REPOSTERIA", status: "disponible", photo: "https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=150&auto=format&fit=crop&q=80" },
+  { name: "Muffin de Vainilla", price: 35.00, category: "REPOSTERIA", status: "no_disponible", photo: "https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=150&auto=format&fit=crop&q=80" }
+];
+
+// Alertas de Cocina (Figma Style: Una sola alerta duplicada/repetida 3 veces)
+let notifications = [
+  { title: "Notificación de Cocina", message: "Cocina reporta falta de producto 'Muffin de Vainilla'. Marcado temporalmente como Agotado.", time: "Hace 5 minutos" },
+  { title: "Notificación de Cocina", message: "Cocina reporta falta de producto 'Muffin de Vainilla'. Marcado temporalmente como Agotado.", time: "Hace 5 minutos" },
+  { title: "Notificación de Cocina", message: "Cocina reporta falta de producto 'Muffin de Vainilla'. Marcado temporalmente como Agotado.", time: "Hace 5 minutos" }
+];
+
+// Pedidos Activos de Coffee-Code (Simulado en tiempo real para Dashboard General)
+let activeOrders = [
+  { id: "101", table: "Mesa 4", items: "2 Capuchino Italiano, 1 Muffin de Vainilla", total: 145.00, status: "PREPARANDO" },
+  { id: "102", table: "Mesa 2", items: "1 Espresso Intenso, 1 Macarrón de Café", total: 65.00, status: "PENDIENTE" },
+  { id: "103", table: "Mesa 5", items: "1 Espresso Frío Cream, 2 Macarrón de Café", total: 100.00, status: "LISTO" },
+  { id: "104", table: "Mesa 1", items: "2 Capuchino Italiano", total: 110.00, status: "POR_COBRAR" },
+  { id: "105", table: "Mesa 3", items: "1 Espresso Intenso", total: 40.00, status: "PAGADO" }
+];
+
+let editingProductIndex = null;
 
 // ==========================================
 // INICIALIZACIÓN
@@ -63,8 +91,8 @@ function renderUsers() {
       <tr>
         <td>
           <div class="user-cell">
-            <div class="user-cell-avatar" style="${user.role === 'ADMINISTRADOR' ? 'background-color: var(--color-primary); color: white;' : ''}">
-              ${initials}
+            <div class="user-cell-avatar" style="${(!user.photo && user.role === 'ADMINISTRADOR') ? 'background-color: var(--color-primary); color: white;' : ''}">
+              ${avatarContent}
             </div>
             <div class="user-cell-info">
               <h4>${user.name}</h4>
@@ -122,6 +150,19 @@ function deleteUser(index) {
 // ==========================================
 // MODAL DE USUARIOS
 // ==========================================
+function previewUserPhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const photoPreview = document.getElementById("userPhotoPreview");
+    photoPreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+    document.getElementById("newUserPhotoData").value = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function openUserModal() {
   const overlay = document.getElementById("userModalOverlay");
   if (overlay) overlay.classList.add("active");
@@ -141,6 +182,9 @@ function handleUserSubmit(event) {
   const email = document.getElementById("newUserEmail").value;
   const password = document.getElementById("newUserPassword").value;
   const role = document.getElementById("newUserRole").value;
+  const shift = document.getElementById("newUserShift").value;
+  const password = document.getElementById("newUserPassword").value;
+  const photo = document.getElementById("newUserPhotoData").value;
   
   if (!name || !email || !password || !role) {
     showToast("Completa todos los campos");
@@ -155,9 +199,12 @@ function handleUserSubmit(event) {
   });
   
   renderUsers();
+  updateMetrics();
   closeUserModal();
   showToast(`¡${name} registrado como ${role}!`);
 }
+
+
 
 // ==========================================
 // REPORTES

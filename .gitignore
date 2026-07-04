@@ -1,0 +1,13 @@
+# Entorno virtual y dependencias de Python
+API/venv/
+API/.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Variables de entorno y secretos
+API/.env
+
+
