@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: coffeecode_db
+    env_file:
+      - ./API/.env
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - coffeecode_network
+
+  web:
+    build: ./API
+    container_name: coffeecode_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: on-failure
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./API:/code
+    env_file:
+      - ./API/.env
+    depends_on:
+      - db
+    networks:
+      - coffeecode_network
+
+  flask:
+    build: ./web-flask
+    container_name: coffeecode_flask
+    restart: on-failure
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./web-flask:/app
+    environment:
+      - API_URL=http://web:8000/api
+    depends_on:
+      - web
+    networks:
+      - coffeecode_network
+
+volumes:
+  postgres_data:
+
+networks:
+  coffeecode_network:
+    driver: bridge

@@ -15,11 +15,11 @@
   <div class="stats-controls" style="margin-bottom: 20px;">
     <div class="control-group">
       <label for="statRange">Rango Temporal:</label>
-      <select id="statRange" onchange="simulateChartUpdate()">
-        <option value="ESTEMES">Este Mes ({{ mes_actual }})</option>
-        <option value="ULTIMOSTRINTA">Últimos 30 días</option>
-        <option value="SEMANAL">Esta Semana</option>
-        <option value="ANUAL">Este Año (2026)</option>
+      <select id="statRange" onchange="window.location.href='?periodo=' + this.value">
+        <option value="ESTEMES" {% if periodo_filtro == 'ESTEMES' %}selected{% endif %}>Este Mes ({{ mes_actual }})</option>
+        <option value="ULTIMOSTRINTA" {% if periodo_filtro == 'ULTIMOSTRINTA' %}selected{% endif %}>Últimos 30 días</option>
+        <option value="SEMANAL" {% if periodo_filtro == 'SEMANAL' %}selected{% endif %}>Esta Semana</option>
+        <option value="ANUAL" {% if periodo_filtro == 'ANUAL' %}selected{% endif %}>Este Año (2026)</option>
       </select>
     </div>
     <div class="control-group">
@@ -31,16 +31,9 @@
   <div class="dashboard-card">
     <div class="card-header">
       <h2>Libro Auxiliar Analítico de Finanzas ({{ mes_actual }})</h2>
-      <button class="btn btn-primary" onclick="openReportPreviewer('Reporte Financiero Completo')" style="border-radius: 12px; gap: 6px;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-        Ver Vista Impresa
-      </button>
     </div>
     <div class="table-responsive">
-      <table class="dense-report-table">
+      <table class="dense-report-table" id="statsFinanceTable">
         <thead>
           <tr>
             <th>Concepto / Periodo</th>
@@ -92,8 +85,8 @@
       </table>
     </div>
     <div style="display: flex; gap: 15px; margin-top: 25px;">
-      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Financiero_Detallado', 'PDF')">Exportar PDF del Ejercicio</button>
-      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Financiero_Detallado', 'Excel')">Exportar Ledger XLSX</button>
+      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Financiero_Detallado', 'PDF', 'statsFinanceTable')">Exportar PDF del Ejercicio</button>
+      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Financiero_Detallado', 'Excel', 'statsFinanceTable')">Exportar Ledger XLSX</button>
     </div>
   </div>
 
@@ -107,9 +100,6 @@
           </svg>
           <input type="text" id="statsProductSearch" placeholder="Buscar producto analizado..." oninput="filterStatsProducts()" style="padding-top: 6px; padding-bottom: 6px; border-radius: 8px;">
         </div>
-        <button class="btn btn-primary" onclick="openReportPreviewer('Reporte de Ventas de Catálogo')" style="padding: 8px 14px; font-size: 0.82rem; border-radius: 12px;">
-          Ver Vista Impresa
-        </button>
       </div>
     </div>
     <div class="table-responsive">
@@ -159,21 +149,14 @@
       </table>
     </div>
     <div style="display: flex; gap: 15px; margin-top: 25px;">
-      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Ventas_Productos_Detallado', 'PDF')">Descargar Catálogo PDF</button>
-      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Ventas_Productos_Detallado', 'Excel')">Descargar Catálogo XLSX</button>
+      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Ventas_Productos_Detallado', 'PDF', 'statsProductsTable')">Descargar Catálogo PDF</button>
+      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Ventas_Productos_Detallado', 'Excel', 'statsProductsTable')">Descargar Catálogo XLSX</button>
     </div>
   </div>
 
   <div class="dashboard-card">
     <div class="card-header">
       <h2>Análisis Operativo y Carga de Flujo Horario</h2>
-      <button class="btn btn-primary" onclick="openReportPreviewer('Reporte Analítico Operacional')" style="border-radius: 12px; gap: 6px;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-        Ver Vista Impresa
-      </button>
     </div>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
@@ -223,7 +206,7 @@
     </div>
 
     <div class="table-responsive">
-      <table class="dense-report-table">
+      <table class="dense-report-table" id="statsOperationsTable">
         <thead>
           <tr>
             <th>Bloque Horario</th>
@@ -241,8 +224,20 @@
               <td style="font-weight: 700;">{{ b.periodo }}</td>
               <td style="font-weight: 700;">{{ b.pedidos }} pedidos</td>
               <td style="font-weight: 700; color: #4e6b62;">${{ "%.2f"|format(b.volumen_ventas) }}</td>
-              <td>{{ b.tiempo_prep }} minutos</td>
-              <td style="font-weight: 600;">{{ b.mesa_activa }}</td>
+              <td>
+                {% if b.tiempo_prep == "N/A" %}
+                  <span style="color: #999; font-style: italic;">No disponible</span>
+                {% else %}
+                  {{ b.tiempo_prep }} minutos
+                {% endif %}
+              </td>
+              <td style="font-weight: 600;">
+                {% if b.mesa_activa == "N/A" %}
+                  <span style="color: #999;">Ninguna</span>
+                {% else %}
+                  {{ b.mesa_activa }}
+                {% endif %}
+              </td>
               <td>
                 {% if b.estado == "TRÁFICO CRÍTICO" %}
                   <span class="badge" style="background-color: rgba(217, 83, 79, 0.1); color: var(--color-danger); font-weight: 700;">TRÁFICO CRÍTICO</span>
@@ -262,37 +257,9 @@
     </div>
     
     <div style="display: flex; gap: 15px; margin-top: 25px;">
-      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Eficiencia_Operaciones', 'PDF')">Exportar PDF de Operación</button>
-      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Eficiencia_Operaciones', 'Excel')">Exportar Métricas Horarias</button>
+      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Eficiencia_Operaciones', 'PDF', 'statsOperationsTable')">Exportar PDF de Operación</button>
+      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Eficiencia_Operaciones', 'Excel', 'statsOperationsTable')">Exportar Métricas Horarias</button>
     </div>
   </div>
 </section>
-
-<!-- ==========================================
-     MODAL: VISUALIZADOR DE REPORTE FORMAL EN PANTALLA
-     ========================================== -->
-<div class="modal-overlay" id="reportPreviewModalOverlay">
-  <div class="modal-card" style="max-width: 860px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
-    <div class="modal-header">
-      <h3 id="modalReportTitle" style="display: flex; align-items: center; gap: 8px;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="22" height="22" style="color: var(--color-primary);">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <span id="modalReportTitleText">Previsualización de Documento de Reporte Oficial</span>
-      </h3>
-      <button class="btn-close-modal" onclick="closeReportPreviewer()">&times;</button>
-    </div>
-    <div class="modal-body" style="overflow-y: auto; padding: 25px; background-color: var(--color-bg); align-items: stretch;">
-      
-      <div class="report-preview-sheet" id="reportPreviewSheet">
-        <!-- El contenido de la hoja se inyectará de forma interactiva con Javascript -->
-      </div>
-
-    </div>
-    <div class="modal-footer" style="padding: 15px 30px 20px; border-top: 1px solid var(--color-border); background-color: white;">
-      <button type="button" class="btn btn-secondary" onclick="closeReportPreviewer()">Cerrar Previsualización</button>
-      <button type="button" class="btn btn-primary" id="btnExportPDFFromModal" onclick="triggerReportDownload('Reporte_Oficial_Verificado', 'PDF')">Exportar PDF Firmado</button>
-    </div>
-  </div>
-</div>
 {% endblock %}
