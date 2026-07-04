@@ -44,3 +44,17 @@ def update_mesa_status(
     db.commit()
     db.refresh(mesa)
     return mesa
+
+@router.delete("/{id}", status_code=status.HTTP_200_OK)
+def delete_mesa(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: Colaborador = Depends(get_current_user)
+):
+    mesa = db.query(Mesa).filter(Mesa.id == id).first()
+    if not mesa:
+        raise HTTPException(status_code=404, detail="Mesa no encontrada")
+        
+    db.delete(mesa)
+    db.commit()
+    return {"message": "Mesa eliminada exitosamente"}

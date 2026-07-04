@@ -34,6 +34,19 @@ def create_categoria(
     db.refresh(new_cat)
     return new_cat
 
+@router.delete("/api/categorias/{id}")
+def delete_categoria(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: Colaborador = Depends(get_current_user)
+):
+    cat = db.query(Categoria).filter(Categoria.id == id).first()
+    if not cat:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    db.delete(cat)
+    db.commit()
+    return {"message": f"Categoría '{cat.name}' eliminada"}
+
 # --- ENDPOINTS DE ESTADOS DE PRODUCTOS ---
 @router.get("/api/estados-productos", response_model=List[EstadoProductoResponse])
 def get_estados_productos(db: Session = Depends(get_db)):

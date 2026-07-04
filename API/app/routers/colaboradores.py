@@ -45,6 +45,10 @@ def create_colaborador(
     db.refresh(new_user)
     return new_user
 
+@router.get("/me/profile", response_model=ColaboradorResponse)
+def get_my_profile(current_user: Colaborador = Depends(get_current_user)):
+    return current_user
+
 @router.put("/me/profile", response_model=ColaboradorResponse)
 def update_my_profile(
     profile_in: ColaboradorUpdate,
