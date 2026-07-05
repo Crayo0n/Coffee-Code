@@ -10,6 +10,7 @@ class ProductoBase(BaseModel):
     category_id: int
     status_id: int
     photo: str
+    description: Optional[str] = None
 
 class ProductoCreate(ProductoBase):
     pass
@@ -20,6 +21,7 @@ class ProductoUpdate(BaseModel):
     category_id: Optional[int] = None
     status_id: Optional[int] = None
     photo: Optional[str] = None
+    description: Optional[str] = None
 
 class ProductoResponse(ProductoBase):
     id: int

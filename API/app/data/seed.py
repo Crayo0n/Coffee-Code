@@ -64,11 +64,11 @@ def seed_database():
             nodisp = db.query(models.EstadoProducto).filter(models.EstadoProducto.name == "no_disponible").first()
             
             productos_seed = [
-                {"name": "Espresso Intenso", "price": 40.00, "category_id": bebida_caliente.id, "status_id": disp.id, "photo": "https://images.unsplash.com/photo-1510972527409-cef5e0be306b?w=150&auto=format&fit=crop&q=80"},
-                {"name": "Capuchino Italiano", "price": 55.00, "category_id": bebida_caliente.id, "status_id": disp.id, "photo": "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=150&auto=format&fit=crop&q=80"},
-                {"name": "Espresso Frío Cream", "price": 50.00, "category_id": bebida_fria.id, "status_id": disp.id, "photo": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=150&auto=format&fit=crop&q=80"},
-                {"name": "Macarrón de Café", "price": 25.00, "category_id": reposteria.id, "status_id": disp.id, "photo": "https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=150&auto=format&fit=crop&q=80"},
-                {"name": "Muffin de Vainilla", "price": 35.00, "category_id": reposteria.id, "status_id": nodisp.id, "photo": "https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=150&auto=format&fit=crop&q=80"}
+                {"name": "Espresso Intenso", "price": 40.00, "category_id": bebida_caliente.id, "status_id": disp.id, "photo": "espresso_intenso.png", "description": "Extracción doble"},
+                {"name": "Latte Vainilla", "price": 55.00, "category_id": bebida_caliente.id, "status_id": disp.id, "photo": "latte_vainilla.png", "description": "Con leche entera"},
+                {"name": "Café Americano", "price": 40.00, "category_id": bebida_caliente.id, "status_id": disp.id, "photo": "cafe_americano.png", "description": "Extra oscuro"},
+                {"name": "Frappé Moka", "price": 65.00, "category_id": bebida_fria.id, "status_id": disp.id, "photo": "frappe_moka.png", "description": "Sin crema batida"},
+                {"name": "Croissant", "price": 45.00, "category_id": reposteria.id, "status_id": disp.id, "photo": "croissant.png", "description": "Mantequilla pura"}
             ]
             for prod_data in productos_seed:
                 db.add(models.Producto(
@@ -76,7 +76,8 @@ def seed_database():
                     price=prod_data["price"],
                     category_id=prod_data["category_id"],
                     status_id=prod_data["status_id"],
-                    photo=prod_data["photo"]
+                    photo=prod_data["photo"],
+                    description=prod_data["description"]
                 ))
             db.commit()
 
