@@ -59,16 +59,22 @@ def create_pedido(
     db.add(new_order)
     db.flush()
     
-    # 4. Crear detalles del pedido
+    # 4. Crear detalles del pedido y descontar stock
     for item in pedido_in.detalles:
         prod = db.query(Producto).filter(Producto.id == item.product_id).first()
         if not prod:
             raise HTTPException(status_code=400, detail=f"El producto con ID {item.product_id} no existe")
             
+        if prod.stock < item.quantity:
+            raise HTTPException(status_code=400, detail=f"Stock insuficiente para {prod.name}. Disponibles: {prod.stock}")
+            
+        prod.stock -= item.quantity
+            
         detail = DetallePedido(
             order_id=new_order.id,
             product_id=item.product_id,
-            quantity=item.quantity
+            quantity=item.quantity,
+            status="PENDIENTE"
         )
         db.add(detail)
         
@@ -92,12 +98,14 @@ def update_pedido_status(
     if status_upper not in allowed_statuses:
         raise HTTPException(status_code=400, detail=f"Estado '{status_in.status}' no válido")
         
-    pedido.status = status_upper
-    
-    # Si el pedido se cancela, la mesa se libera
-    if status_upper == "CANCELADO":
+    # Si el pedido se cancela, la mesa se libera y se regresa el stock
+    if status_upper == "CANCELADO" and pedido.status != "CANCELADO":
         pedido.mesa.status = "available"
-        
+        for detail in pedido.detalles:
+            if detail.producto:
+                detail.producto.stock += detail.quantity
+                
+    pedido.status = status_upper
     db.commit()
     db.refresh(pedido)
     return pedido
@@ -121,6 +129,11 @@ def add_detalles_to_pedido(
         prod = db.query(Producto).filter(Producto.id == item.product_id).first()
         if not prod:
             raise HTTPException(status_code=400, detail=f"Producto {item.product_id} no existe")
+            
+        if prod.stock < item.quantity:
+            raise HTTPException(status_code=400, detail=f"Stock insuficiente para {prod.name}. Disponibles: {prod.stock}")
+            
+        prod.stock -= item.quantity
             
         detail = DetallePedido(
             order_id=pedido.id,
@@ -154,6 +167,12 @@ def update_detalle_cantidad(
     if cantidad_in.quantity <= 0:
         raise HTTPException(status_code=400, detail="La cantidad debe ser mayor a cero")
 
+    # Calcular diferencia para ajustar el stock
+    diff = cantidad_in.quantity - detail.quantity
+    if diff > 0 and detail.producto.stock < diff:
+        raise HTTPException(status_code=400, detail=f"Stock insuficiente para incrementar. Disponibles: {detail.producto.stock}")
+        
+    detail.producto.stock -= diff
     detail.quantity = cantidad_in.quantity
     db.commit()
     db.refresh(detail)
@@ -170,8 +189,12 @@ def delete_detalle(
     if not detail:
         raise HTTPException(status_code=404, detail="Detalle no encontrado en este pedido")
         
+        
     if detail.pedido.status in ["POR_COBRAR", "PAGADO", "CANCELADO"]:
         raise HTTPException(status_code=400, detail="No se puede modificar un pedido cobrado o cancelado")
+
+    # Restaurar stock
+    detail.producto.stock += detail.quantity
 
     db.delete(detail)
     db.commit()

@@ -7,3 +7,4 @@ from .mesa import Mesa
 from .pedido import Pedido
 from .detalle_pedido import DetallePedido
 from .historial_venta import HistorialVenta
+from .alerta import Alerta

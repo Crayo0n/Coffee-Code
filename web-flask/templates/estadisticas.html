@@ -14,15 +14,6 @@
   <!-- Controles de Filtros -->
   <div class="stats-controls" style="margin-bottom: 20px;">
     <div class="control-group">
-      <label for="statRange">Rango Temporal:</label>
-      <select id="statRange" onchange="window.location.href='?periodo=' + this.value">
-        <option value="ESTEMES" {% if periodo_filtro == 'ESTEMES' %}selected{% endif %}>Este Mes ({{ mes_actual }})</option>
-        <option value="ULTIMOSTRINTA" {% if periodo_filtro == 'ULTIMOSTRINTA' %}selected{% endif %}>Últimos 30 días</option>
-        <option value="SEMANAL" {% if periodo_filtro == 'SEMANAL' %}selected{% endif %}>Esta Semana</option>
-        <option value="ANUAL" {% if periodo_filtro == 'ANUAL' %}selected{% endif %}>Este Año (2026)</option>
-      </select>
-    </div>
-    <div class="control-group">
       <label>Periodo actual: <strong>{{ periodo_actual }}</strong></label>
     </div>
   </div>
@@ -85,8 +76,8 @@
       </table>
     </div>
     <div style="display: flex; gap: 15px; margin-top: 25px;">
-      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Financiero_Detallado', 'PDF', 'statsFinanceTable')">Exportar PDF del Ejercicio</button>
-      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Financiero_Detallado', 'Excel', 'statsFinanceTable')">Exportar Ledger XLSX</button>
+      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Financiero_Detallado', 'PDF', 'statsFinanceTable')">Descargar PDF</button>
+      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Financiero_Detallado', 'Excel', 'statsFinanceTable')">Descargar XLSX</button>
     </div>
   </div>
 
@@ -149,8 +140,8 @@
       </table>
     </div>
     <div style="display: flex; gap: 15px; margin-top: 25px;">
-      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Ventas_Productos_Detallado', 'PDF', 'statsProductsTable')">Descargar Catálogo PDF</button>
-      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Ventas_Productos_Detallado', 'Excel', 'statsProductsTable')">Descargar Catálogo XLSX</button>
+      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Ventas_Productos_Detallado', 'PDF', 'statsProductsTable')">Descargar PDF</button>
+      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Ventas_Productos_Detallado', 'Excel', 'statsProductsTable')">Descargar XLSX</button>
     </div>
   </div>
 
@@ -257,8 +248,8 @@
     </div>
     
     <div style="display: flex; gap: 15px; margin-top: 25px;">
-      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Eficiencia_Operaciones', 'PDF', 'statsOperationsTable')">Exportar PDF de Operación</button>
-      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Eficiencia_Operaciones', 'Excel', 'statsOperationsTable')">Exportar Métricas Horarias</button>
+      <button class="btn btn-pdf" style="flex: 1;" onclick="triggerReportDownload('Reporte_Eficiencia_Operaciones', 'PDF', 'statsOperationsTable')">Descargar PDF</button>
+      <button class="btn btn-xlsx" style="flex: 1;" onclick="triggerReportDownload('Reporte_Eficiencia_Operaciones', 'Excel', 'statsOperationsTable')">Descargar XLSX</button>
     </div>
   </div>
 </section>

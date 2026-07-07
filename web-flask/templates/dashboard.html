@@ -103,8 +103,19 @@
           <span>Alertas de Cocina</span>
         </h2>
       </div>
-      <div class="notification-list" id="kitchenAlertsList">
-        <!-- Notificaciones de cocina dinámicas -->
+      <div class="notification-list" id="kitchenAlertsList" style="display: flex; flex-direction: column; gap: 10px;">
+        {% if not alertas %}
+          <p style="color: var(--color-muted); text-align: center; margin-top: 10px;">No hay alertas pendientes</p>
+        {% else %}
+          {% for alerta in alertas %}
+          <div style="background-color: rgba(217, 83, 79, 0.1); border-left: 4px solid var(--color-danger); padding: 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <p style="margin: 0; font-weight: 600; color: var(--color-dark);">{{ alerta.message }}</p>
+              <small style="color: var(--color-muted);">{{ alerta.created_at|truncate(16, True, '') }}</small>
+            </div>
+          </div>
+          {% endfor %}
+        {% endif %}
       </div>
     </div>
 

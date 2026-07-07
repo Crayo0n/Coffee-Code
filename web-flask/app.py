@@ -108,10 +108,17 @@ def dashboard():
                 p['total_price'] = total_price
             # Filtrar comandas que no están pagadas
             pedidos_activos = [p for p in all_pedidos if p['status'] != 'PAGADO']
+            
+        # 3. Obtener alertas de cocina
+        alertas = []
+        alertas_resp = requests.get(f"{API_URL}/alertas?unread_only=true", headers=headers)
+        if alertas_resp.status_code == 200:
+            alertas = alertas_resp.json()
+            
     except requests.exceptions.RequestException as e:
         print("Error de conexión a la API:", e)
         
-    return render_template('dashboard.html', active_page='dashboard', kpis=kpis, pedidos=pedidos_activos)
+    return render_template('dashboard.html', active_page='dashboard', kpis=kpis, pedidos=pedidos_activos, alertas=alertas)
 
 # --- RUTA PERSONAL (CRUD) ---
 @app.route('/personal')

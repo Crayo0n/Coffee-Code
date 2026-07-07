@@ -9,6 +9,7 @@ class ProductoBase(BaseModel):
     price: Decimal
     category_id: int
     status_id: int
+    stock: int = 50
     photo: str
 
 class ProductoCreate(ProductoBase):
@@ -19,6 +20,7 @@ class ProductoUpdate(BaseModel):
     price: Optional[Decimal] = None
     category_id: Optional[int] = None
     status_id: Optional[int] = None
+    stock: Optional[int] = None
     photo: Optional[str] = None
 
 class ProductoResponse(ProductoBase):
