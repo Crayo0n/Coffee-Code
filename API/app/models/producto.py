@@ -12,6 +12,7 @@ class Producto(Base):
     status_id = Column(Integer, ForeignKey("estados_productos.id"), nullable=False)
     stock = Column(Integer, default=50)
     photo = Column(Text, nullable=False)
+    description = Column(String(255), nullable=True)
 
     categoria = relationship("Categoria", back_populates="productos")
     estado = relationship("EstadoProducto", back_populates="productos")

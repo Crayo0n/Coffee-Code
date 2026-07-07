@@ -11,6 +11,7 @@ class ProductoBase(BaseModel):
     status_id: int
     stock: int = 50
     photo: str
+    description: Optional[str] = None
 
 class ProductoCreate(ProductoBase):
     pass
@@ -22,6 +23,7 @@ class ProductoUpdate(BaseModel):
     status_id: Optional[int] = None
     stock: Optional[int] = None
     photo: Optional[str] = None
+    description: Optional[str] = None
 
 class ProductoResponse(ProductoBase):
     id: int
