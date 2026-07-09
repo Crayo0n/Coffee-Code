@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.data.database import get_db
 from app.models.mesa import Mesa
 from app.models.colaborador import Colaborador
-from app.data.schemas.mesa import MesaBase, MesaCreate, MesaResponse
+from app.data.schemas.mesa import MesaBase, MesaCreate, MesaResponse, MesaUpdateStatus
 from app.security import get_current_user
 
 router = APIRouter(prefix="/api/mesas", tags=["Mesas"])
@@ -32,7 +32,7 @@ def create_mesa(
 @router.put("/{id}/status", response_model=MesaResponse)
 def update_mesa_status(
     id: int,
-    status_in: MesaBase,
+    status_in: MesaUpdateStatus,
     db: Session = Depends(get_db),
     current_user: Colaborador = Depends(get_current_user)
 ):

@@ -46,8 +46,8 @@ export default function CajaDashboard() {
 
       const ventasData = await ventasService.getVentas();
       const hoy = new Date().toISOString().split('T')[0];
-      const ventasHoy = ventasData.filter(v => v.fecha.startsWith(hoy));
-      const total = ventasHoy.reduce((sum, v) => sum + v.total, 0);
+      const ventasHoy = ventasData.filter(v => (v.date || v.fecha || '').startsWith(hoy));
+      const total = ventasHoy.reduce((sum, v) => sum + parseFloat(v.total_paid || v.total || 0), 0);
       setTotalCaja(total);
     } catch (error) {
       console.error('Error fetching caja data:', error);

@@ -8,6 +8,9 @@ class MesaBase(BaseModel):
 class MesaCreate(MesaBase):
     pass
 
+class MesaUpdateStatus(BaseModel):
+    status: str
+
 class MesaResponse(MesaBase):
     id: int
     class Config:

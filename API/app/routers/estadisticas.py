@@ -977,6 +977,9 @@ def get_pedido_detalles(pedido_id: int, db: Session = Depends(get_db)):
     mesa = venta.table_name if venta else (pedido.table_name if pedido.table_name else "Mostrador")
     mesero = pedido.waiter.name if pedido.waiter else "Caja"
     
+    tips = venta.tips if venta and venta.tips is not None else 0.0
+    total_paid = venta.total_paid if venta and venta.total_paid is not None else sum(i["importe"] for i in items)
+    
     return {
         "id_venta": venta.ticket_id if venta else pedido.id,
         "fecha": str(venta.date) if venta else "",
@@ -985,7 +988,10 @@ def get_pedido_detalles(pedido_id: int, db: Session = Depends(get_db)):
         "mesa": mesa,
         "mesero": mesero,
         "items": items,
-        "total": venta.total_paid if venta else sum(i["importe"] for i in items),
+        "subtotal": (total_paid - tips),
+        "propina": tips,
+        "total": total_paid,
+        "metodo_pago": venta.payment_method if venta else "N/A",
         "estado": pedido.status
     }
 

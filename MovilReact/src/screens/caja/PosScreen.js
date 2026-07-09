@@ -41,14 +41,13 @@ export default function PosScreen() {
       const propina = (calculatedTotal * propinaPct) / 100;
       
       const response = await ventasService.cobrarPedido({
-        pedido_id: pedidoId,
-        metodo_pago: metodoPago,
-        propina: propina,
-        total: calculatedTotal + propina
+        order_id: pedidoId,
+        payment_method: metodoPago.toUpperCase(),
+        tips: propina
       });
       
       Alert.alert('Éxito', 'Cobro procesado correctamente');
-      navigation.navigate('Turno', { screen: 'Ticket', params: { id: response.venta.id } });
+      navigation.navigate('Turno', { screen: 'Ticket', params: { id: response.ticket_id } });
       
     } catch (error) {
       Alert.alert('Error', 'No se pudo procesar el cobro');

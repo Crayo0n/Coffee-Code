@@ -7,7 +7,7 @@ export const mesasService = {
   },
   
   updateStatus: async (id, statusData) => {
-    const response = await client.put(`/api/mesas/${id}`, statusData);
+    const response = await client.put(`/api/mesas/${id}/status`, statusData);
     return response.data;
   }
 };

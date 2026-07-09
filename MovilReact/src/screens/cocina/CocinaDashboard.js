@@ -109,7 +109,7 @@ export default function CocinaDashboard() {
             </View>
             <Text style={[styles.itemQty, isCompletado && styles.textMuted]}>{detalle.cantidad}x</Text>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.itemName, isCompletado && styles.textMuted]}>{detalle.producto?.nombre}</Text>
+              <Text style={[styles.itemName, isCompletado && styles.textMuted]}>{detalle.producto?.name || detalle.producto?.nombre}</Text>
               {detalle.notas ? <Text style={[styles.itemNotes, isCompletado && styles.textMuted]}>{detalle.notas}</Text> : null}
             </View>
           </View>
