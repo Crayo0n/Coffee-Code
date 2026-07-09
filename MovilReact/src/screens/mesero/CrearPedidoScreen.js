@@ -148,7 +148,14 @@ export default function CrearPedidoScreen() {
             contentContainerStyle={styles.productList}
             renderItem={({ item }) => {
               const cantidad = cart[item.id]?.cantidad || 0;
-              const photoSrc = PRODUCT_IMAGES[item.photo] || require('../../../assets/icon.png');
+              let photoSrc = require('../../../assets/icon.png');
+              if (item.photo) {
+                if (item.photo.startsWith('data:image') || item.photo.startsWith('http')) {
+                  photoSrc = { uri: item.photo };
+                } else if (PRODUCT_IMAGES[item.photo]) {
+                  photoSrc = PRODUCT_IMAGES[item.photo];
+                }
+              }
               return (
                 <View style={styles.productCard}>
                   <View style={styles.imageContainer}>

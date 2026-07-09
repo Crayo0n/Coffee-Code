@@ -2,7 +2,8 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class AlertaBase(BaseModel):
-    message: str
+    title: str
+    description: str
 
 class AlertaCreate(AlertaBase):
     pass

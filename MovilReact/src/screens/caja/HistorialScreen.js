@@ -40,20 +40,20 @@ export default function HistorialScreen() {
     return (
       <TouchableOpacity 
         style={styles.card}
-        onPress={() => navigation.navigate('Ticket', { id: item.id })}
+        onPress={() => navigation.navigate('Ticket', { id: item.order_id })}
       >
         <View style={styles.iconContainer}>
           <Ionicons name={isEfectivo ? "cash" : "card"} size={20} color={colors.coffee} />
         </View>
         
         <View style={styles.cardContent}>
-          <Text style={styles.cardTitle}>Venta #{item.id.toString().padStart(3, '0')}</Text>
-          <Text style={styles.cardDate}>{new Date(item.fecha).toLocaleString()}</Text>
+          <Text style={styles.cardTitle}>Venta #{item.ticket_id.toString().padStart(3, '0')}</Text>
+          <Text style={styles.cardDate}>{item.date} {item.hour}</Text>
         </View>
         
         <View style={styles.amountContainer}>
-          <Text style={styles.amountTotal}>${item.total.toFixed(2)}</Text>
-          <Text style={styles.paymentMethod}>{item.metodo_pago}</Text>
+          <Text style={styles.amountTotal}>${Number(item.total_paid).toFixed(2)}</Text>
+          <Text style={styles.paymentMethod}>{item.payment_method}</Text>
         </View>
         
         <Ionicons name="chevron-forward" size={16} color={colors.darkLight} style={{ marginLeft: 8 }} />
@@ -76,7 +76,7 @@ export default function HistorialScreen() {
         ) : (
           <FlatList
             data={ventas}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item.ticket_id.toString()}
             renderItem={renderVenta}
             contentContainerStyle={styles.list}
             refreshControl={

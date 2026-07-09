@@ -77,7 +77,11 @@
               <td>
                 <div class="product-photo-thumbnail" style="width: 45px; height: 45px; border-radius: 12px; overflow: hidden; background-color: var(--color-border);">
                   {% if product.photo %}
-                    <img src="{{ product.photo }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% if product.photo.startswith('http') or product.photo.startswith('data:image') %}
+                      <img src="{{ product.photo }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                      <img src="{{ url_for('static', filename='img/productos/' ~ product.photo) }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% endif %}
                   {% else %}
                     <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--color-muted); font-weight: bold;">CC</div>
                   {% endif %}

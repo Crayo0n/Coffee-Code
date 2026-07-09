@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import requests
 from functools import wraps
 
@@ -130,6 +130,9 @@ def personal():
         response = requests.get(f"{API_URL}/colaboradores", headers=headers)
         if response.status_code == 200:
             users = response.json()
+        elif response.status_code == 401:
+            session.clear()
+            return redirect(url_for('login'))
     except requests.exceptions.RequestException as e:
         print("Error de conexión a la API:", e)
         
@@ -436,6 +439,62 @@ def estadisticas():
         start_date=start_date,
         end_date=end_date
     )
+
+@app.route('/api/estadisticas-data')
+@login_required
+def estadisticas_data():
+    token = session.get('token')
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    params = {}
+    if start_date: params['start_date'] = start_date
+    if end_date: params['end_date'] = end_date
+    
+    kpis = {}
+    historial = []
+    
+    try:
+        kpis_resp = requests.get(f"{API_URL}/estadisticas/kpis", headers=headers, params=params)
+        if kpis_resp.status_code == 200:
+            kpis = kpis_resp.json()
+            
+        hist_resp = requests.get(f"{API_URL}/estadisticas/historial", headers=headers, params=params)
+        if hist_resp.status_code == 200:
+            historial = hist_resp.json().get("historial", [])
+    except Exception as e:
+        print(f"Error: {e}")
+        
+    return jsonify({"kpis": kpis, "historial": historial})
+
+@app.route('/api/graficas-data')
+@login_required
+def graficas_data():
+    token = session.get('token')
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    periodo = request.args.get('periodo', 'ESTEMES')
+    params = {'periodo': periodo}
+    
+    financiero = {}
+    productos = []
+    
+    try:
+        fin_resp = requests.get(f"{API_URL}/estadisticas/reporte-financiero", headers=headers, params=params)
+        if fin_resp.status_code == 200:
+            financiero = fin_resp.json()
+            
+        prod_resp = requests.get(f"{API_URL}/estadisticas/reporte-productos", headers=headers, params=params)
+        if prod_resp.status_code == 200:
+            productos = prod_resp.json()
+    except Exception as e:
+        print(f"Error fetching graficas data: {e}")
+        
+    return jsonify({
+        "financiero": financiero,
+        "productos": productos
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -26,7 +26,7 @@ def create_alerta(
     db: Session = Depends(get_db),
     current_user: Colaborador = Depends(get_current_user)
 ):
-    new_alerta = Alerta(message=alerta_in.message)
+    new_alerta = Alerta(title=alerta_in.title, description=alerta_in.description)
     db.add(new_alerta)
     db.commit()
     db.refresh(new_alerta)

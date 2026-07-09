@@ -32,6 +32,7 @@ function CajaStack() {
   );
 }
 
+
 export default function CajaNavigator() {
   return (
     <Tab.Navigator

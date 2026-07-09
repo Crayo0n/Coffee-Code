@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator  } from 'react-native';
+import {  View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image  } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
@@ -17,8 +17,7 @@ export default function TicketScreen() {
   useEffect(() => {
     const fetchVentaDetails = async () => {
       try {
-        const ventasData = await ventasService.getVentas();
-        const data = ventasData.find(v => v.id === ventaId);
+        const data = await ventasService.getTicketDetails(ventaId);
         setVenta(data);
       } catch (error) {
         console.error(error);
@@ -49,40 +48,53 @@ export default function TicketScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.ticketPaper}>
           <View style={styles.ticketHeader}>
+            <Image source={require('../../../assets/LOGOCOFFECODE.png')} style={styles.logo} />
             <Text style={styles.brandName}>COFFEE CODE</Text>
-            <Text style={styles.ticketInfo}>Ticket #{venta.id.toString().padStart(3, '0')}</Text>
-            <Text style={styles.ticketInfo}>{new Date(venta.fecha).toLocaleString()}</Text>
+            <Text style={styles.ticketInfo}>Ticket de Venta</Text>
+            <Text style={styles.ticketInfo}>ID: {venta.id_venta.toString().padStart(3, '0')} | Fecha: {venta.fecha}</Text>
           </View>
           
           <View style={styles.dashedDivider} />
           
           <View style={styles.ticketDetails}>
             <View style={styles.row}>
-              <Text style={styles.label}>Cajero:</Text>
-              <Text style={styles.value}>{venta.cajero?.nombre || 'N/A'}</Text>
+              <Text style={styles.label}>Cliente:</Text>
+              <Text style={styles.value}>{venta.cliente}</Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>Método de Pago:</Text>
-              <Text style={[styles.value, { textTransform: 'uppercase' }]}>{venta.metodo_pago}</Text>
+              <Text style={styles.label}>Mesa:</Text>
+              <Text style={styles.value}>{venta.mesa}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Mesero:</Text>
+              <Text style={styles.value}>{venta.mesero}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Estado:</Text>
+              <Text style={styles.value}>{venta.estado}</Text>
             </View>
           </View>
 
           <View style={styles.dashedDivider} />
           
+          <View style={styles.itemsTable}>
+            <View style={[styles.row, { borderBottomWidth: 1, borderBottomColor: '#ddd', paddingBottom: 4, marginBottom: 8 }]}>
+              <Text style={[styles.label, { flex: 0.5 }]}>Cant</Text>
+              <Text style={[styles.label, { flex: 2 }]}>Art</Text>
+              <Text style={[styles.label, { flex: 1, textAlign: 'right' }]}>Total</Text>
+            </View>
+            {venta.items && venta.items.map((item, index) => (
+              <View key={index} style={styles.row}>
+                <Text style={[styles.value, { flex: 0.5, fontWeight: 'normal' }]}>{item.cantidad}</Text>
+                <Text style={[styles.value, { flex: 2, fontWeight: 'normal' }]}>{item.nombre}</Text>
+                <Text style={[styles.value, { flex: 1, textAlign: 'right', fontWeight: 'normal' }]}>${item.importe.toFixed(2)}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={[styles.dashedDivider, { marginVertical: 16 }]} />
+          
           <View style={styles.amounts}>
-            <View style={styles.row}>
-              <Text style={styles.amountLabel}>Subtotal</Text>
-              <Text style={styles.amountValue}>${(venta.total / 1.16).toFixed(2)}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.amountLabel}>IVA (16%)</Text>
-              <Text style={styles.amountValue}>${(venta.total - (venta.total / 1.16)).toFixed(2)}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.amountLabel}>Propina</Text>
-              <Text style={styles.amountValue}>${venta.propina.toFixed(2)}</Text>
-            </View>
-            <View style={[styles.dashedDivider, { marginVertical: 16 }]} />
             <View style={styles.row}>
               <Text style={styles.totalLabel}>TOTAL</Text>
               <Text style={styles.totalValue}>${venta.total.toFixed(2)}</Text>
@@ -136,12 +148,14 @@ const styles = StyleSheet.create({
     shadowColor: colors.dark, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5,
   },
   ticketHeader: { alignItems: 'center', marginBottom: 16 },
+  logo: { width: 50, height: 50, resizeMode: 'contain', marginBottom: 8 },
   brandName: { fontSize: 24, fontWeight: '900', color: colors.dark, marginBottom: 8, letterSpacing: 2 },
   ticketInfo: { fontSize: 12, color: colors.darkLight, marginBottom: 2, fontFamily: 'monospace' },
   dashedDivider: { height: 1, borderWidth: 1, borderColor: colors.darkLighter, borderStyle: 'dashed', marginVertical: 16 },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   label: { fontSize: 14, color: colors.darkLight, fontFamily: 'monospace' },
   value: { fontSize: 14, color: colors.dark, fontWeight: 'bold', fontFamily: 'monospace' },
+  itemsTable: { marginVertical: 8 },
   amounts: { marginVertical: 8 },
   amountLabel: { fontSize: 14, color: colors.darkLight },
   amountValue: { fontSize: 14, color: colors.dark, fontFamily: 'monospace' },

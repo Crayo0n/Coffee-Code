@@ -9,5 +9,10 @@ export const ventasService = {
   getVentas: async () => {
     const response = await client.get('/api/ventas/');
     return response.data;
+  },
+
+  getTicketDetails: async (orderId) => {
+    const response = await client.get(`/api/estadisticas/pedidos/${orderId}/detalles`);
+    return response.data;
   }
 };

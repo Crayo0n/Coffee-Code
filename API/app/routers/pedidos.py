@@ -212,7 +212,7 @@ def update_detalle_status(
     if not detail:
         raise HTTPException(status_code=404, detail="Detalle no encontrado en este pedido")
         
-    allowed_statuses = ["PENDIENTE", "PREPARANDO", "LISTO"]
+    allowed_statuses = ["PENDIENTE", "PREPARANDO", "PREPARADO", "LISTO"]
     status_upper = status_in.status.upper()
     if status_upper not in allowed_statuses:
         raise HTTPException(status_code=400, detail="Estado no válido para el platillo")

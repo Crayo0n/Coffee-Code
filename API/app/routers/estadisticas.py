@@ -374,10 +374,25 @@ def exportar_pedidos_excel(start_date: Optional[str] = Query(None), end_date: Op
                     top=Side(style='thin', color='d3b895'), 
                     bottom=Side(style='thin', color='d3b895'))
 
+    from openpyxl.drawing.image import Image as ExcelImage
+    import os
+    logo_path = r"/code/app/assets/logo.png"
+    if os.path.exists(logo_path):
+        img = ExcelImage(logo_path)
+        img.width = 80
+        img.height = 80
+        ws.add_image(img, 'A1')
+    
+    ws.row_dimensions[1].height = 65
+    ws.merge_cells('C1:D1')
+    ws['C1'] = "Reporte de Pedidos"
+    ws['C1'].font = Font(size=18, bold=True, color="90694a")
+    ws['C1'].alignment = Alignment(horizontal="center", vertical="center")
+
     headers = ['ID Pedido', 'Mesa', 'Estado', 'Artículos']
     
     for col_num, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_num, value=header)
+        cell = ws.cell(row=3, column=col_num, value=header)
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = center_align
@@ -390,15 +405,16 @@ def exportar_pedidos_excel(start_date: Optional[str] = Query(None), end_date: Op
         data.append([p.id, mesa_txt, p.status, len(p.detalles)])
 
 
-    for row_num, row_data in enumerate(data, 2):
+    for row_num, row_data in enumerate(data, 4):
         for col_num, cell_value in enumerate(row_data, 1):
             cell = ws.cell(row=row_num, column=col_num, value=cell_value)
             cell.alignment = center_align
             cell.border = border
             
-    for col in ws.columns:
+    from openpyxl.utils import get_column_letter
+    for idx, col in enumerate(ws.columns, 1):
         max_length = 0
-        column = col[0].column_letter
+        column = get_column_letter(idx)
         for cell in col:
             try:
                 if len(str(cell.value)) > max_length:
@@ -478,10 +494,25 @@ def exportar_productos_excel(categoria: Optional[str] = Query(None), db: Session
                     top=Side(style='thin', color='d3b895'), 
                     bottom=Side(style='thin', color='d3b895'))
 
+    from openpyxl.drawing.image import Image as ExcelImage
+    import os
+    logo_path = r"/code/app/assets/logo.png"
+    if os.path.exists(logo_path):
+        img = ExcelImage(logo_path)
+        img.width = 80
+        img.height = 80
+        ws.add_image(img, 'A1')
+    
+    ws.row_dimensions[1].height = 65
+    ws.merge_cells('C1:D1')
+    ws['C1'] = "Reporte de Productos"
+    ws['C1'].font = Font(size=18, bold=True, color="90694a")
+    ws['C1'].alignment = Alignment(horizontal="center", vertical="center")
+
     headers = ['ID Producto', 'Nombre', 'Categoría', 'Precio']
     
     for col_num, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_num, value=header)
+        cell = ws.cell(row=3, column=col_num, value=header)
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = center_align
@@ -494,15 +525,16 @@ def exportar_productos_excel(categoria: Optional[str] = Query(None), db: Session
         data.append([p.id, p.name, cat_name, float(p.price)])
 
 
-    for row_num, row_data in enumerate(data, 2):
+    for row_num, row_data in enumerate(data, 4):
         for col_num, cell_value in enumerate(row_data, 1):
             cell = ws.cell(row=row_num, column=col_num, value=cell_value)
             cell.alignment = center_align
             cell.border = border
             
-    for col in ws.columns:
+    from openpyxl.utils import get_column_letter
+    for idx, col in enumerate(ws.columns, 1):
         max_length = 0
-        column = col[0].column_letter
+        column = get_column_letter(idx)
         for cell in col:
             try:
                 if len(str(cell.value)) > max_length:
@@ -577,10 +609,25 @@ def exportar_kpis_excel(start_date: Optional[str] = Query(None), end_date: Optio
                     top=Side(style='thin', color='d3b895'), 
                     bottom=Side(style='thin', color='d3b895'))
 
+    from openpyxl.drawing.image import Image as ExcelImage
+    import os
+    logo_path = r"/code/app/assets/logo.png"
+    if os.path.exists(logo_path):
+        img = ExcelImage(logo_path)
+        img.width = 80
+        img.height = 80
+        ws.add_image(img, 'A1')
+    
+    ws.row_dimensions[1].height = 65
+    ws.merge_cells('B1:C1')
+    ws['B1'] = "Reporte de KPIs"
+    ws['B1'].font = Font(size=18, bold=True, color="90694a")
+    ws['B1'].alignment = Alignment(horizontal="center", vertical="center")
+
     headers = ['Métrica', 'Valor']
     
     for col_num, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_num, value=header)
+        cell = ws.cell(row=3, column=col_num, value=header)
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = center_align
@@ -595,15 +642,16 @@ def exportar_kpis_excel(start_date: Optional[str] = Query(None), end_date: Optio
     ]
 
 
-    for row_num, row_data in enumerate(data, 2):
+    for row_num, row_data in enumerate(data, 4):
         for col_num, cell_value in enumerate(row_data, 1):
             cell = ws.cell(row=row_num, column=col_num, value=cell_value)
             cell.alignment = center_align
             cell.border = border
             
-    for col in ws.columns:
+    from openpyxl.utils import get_column_letter
+    for idx, col in enumerate(ws.columns, 1):
         max_length = 0
-        column = col[0].column_letter
+        column = get_column_letter(idx)
         for cell in col:
             try:
                 if len(str(cell.value)) > max_length:
@@ -673,15 +721,16 @@ def exportar_ticket_pdf(pedido_id: int, db: Session = Depends(get_db)):
     productos = {p.id: p for p in db.query(Producto).all()}
     
     import tempfile, os
+    from reportlab.lib.units import mm
     file_path = os.path.join(tempfile.gettempdir(), f"ticket_{pedido_id}.pdf")
     
-    # We use letter size but with large margins to simulate a centered ticket on the page
-    doc = SimpleDocTemplate(file_path, pagesize=letter, rightMargin=150, leftMargin=150, topMargin=50, bottomMargin=50, title=f"Ticket Pedido #{pedido_id}", author="Coffee-Code")
+    # 80mm width for thermal printer
+    doc = SimpleDocTemplate(file_path, pagesize=(80*mm, 200*mm), rightMargin=3*mm, leftMargin=3*mm, topMargin=3*mm, bottomMargin=3*mm, title=f"Ticket Pedido #{pedido_id}", author="Coffee-Code")
     elementos = []
     
     styles = getSampleStyleSheet()
     center_style = ParagraphStyle(name="Center", alignment=1)
-    title_style = ParagraphStyle(name="Title", alignment=1, fontSize=18, textColor=colors.HexColor("#90694a"), fontName="Helvetica-Bold", spaceAfter=5)
+    title_style = ParagraphStyle(name="Title", alignment=1, fontSize=16, textColor=colors.HexColor("#90694a"), fontName="Helvetica-Bold", spaceAfter=5)
     
     # Logo
     logo_path = r"/code/app/assets/logo.png"
@@ -691,7 +740,7 @@ def exportar_ticket_pdf(pedido_id: int, db: Session = Depends(get_db)):
         elementos.append(img)
         elementos.append(Spacer(1, 10))
         
-    fecha_str = f"{venta.date} {venta.hour}" if venta else "N/A"
+    fecha_str = f"{venta.date} {str(venta.hour)[:11]}" if venta else "N/A"
     estado_str = pedido.status.upper() if pedido.status else "COMPLETADO"
     mesa_str = venta.table_name if venta else (pedido.table_name or "Mostrador")
     mesero_str = pedido.waiter.name if pedido.waiter else "Caja"
@@ -722,7 +771,7 @@ def exportar_ticket_pdf(pedido_id: int, db: Session = Depends(get_db)):
             tabla_data.append([str(d.quantity), p.name, f"${sub:.2f}"])
             
     # Items Table
-    t = Table(tabla_data, colWidths=[40, 160, 80])
+    t = Table(tabla_data, colWidths=[25, 125, 50])
     t.setStyle(TableStyle([
         ('LINEBELOW', (0,0), (-1,0), 1, colors.HexColor("#dddddd")),
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
@@ -739,7 +788,7 @@ def exportar_ticket_pdf(pedido_id: int, db: Session = Depends(get_db)):
         total += float(venta.tips)
     total_data.append(["TOTAL:", f"${total:.2f}"])
     
-    total_table = Table(total_data, colWidths=[100, 80])
+    total_table = Table(total_data, colWidths=[65, 65])
     total_table.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'RIGHT'),
         ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
@@ -748,7 +797,7 @@ def exportar_ticket_pdf(pedido_id: int, db: Session = Depends(get_db)):
         ('TOPPADDING', (0,-1), (-1,-1), 8)
     ]))
     
-    layout = Table([["", total_table]], colWidths=[100, 180])
+    layout = Table([["", total_table]], colWidths=[70, 130])
     elementos.append(layout)
     
     elementos.append(Spacer(1, 30))
@@ -777,9 +826,24 @@ def exportar_historial_excel(start_date: Optional[str] = Query(None), end_date: 
     center_align = Alignment(horizontal="center", vertical="center")
     border = Border(left=Side(style='thin', color='d3b895'), right=Side(style='thin', color='d3b895'), top=Side(style='thin', color='d3b895'), bottom=Side(style='thin', color='d3b895'))
 
+    from openpyxl.drawing.image import Image as ExcelImage
+    import os
+    logo_path = r"/code/app/assets/logo.png"
+    if os.path.exists(logo_path):
+        img = ExcelImage(logo_path)
+        img.width = 80
+        img.height = 80
+        ws.add_image(img, 'A1')
+    
+    ws.row_dimensions[1].height = 65
+    ws.merge_cells('C1:F1')
+    ws['C1'] = "Reporte de Historial de Ventas"
+    ws['C1'].font = Font(size=18, bold=True, color="90694a")
+    ws['C1'].alignment = Alignment(horizontal="center", vertical="center")
+
     headers = ['ID Venta', 'Fecha y Hora', 'Cliente', 'Mesa', 'Mesero', 'Artículos', 'Total', 'Estado']
     for col_num, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_num, value=header)
+        cell = ws.cell(row=3, column=col_num, value=header)
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = center_align
@@ -793,17 +857,18 @@ def exportar_historial_excel(start_date: Optional[str] = Query(None), end_date: 
         mesero = pedido.waiter.name if pedido and pedido.waiter else v.cashier_email
         estado = pedido.status if pedido else "PAGADO"
         dt_str = f"{v.date.strftime('%Y-%m-%d')} {v.hour.strftime('%H:%M:%S')}"
-        data.append([v.ticket_id, dt_str, cliente, mesa, mesero, len(pedido.detalles) if pedido else 0, v.total_paid, estado])
+        data.append([v.ticket_id, dt_str, cliente, mesa, mesero, len(pedido.detalles) if pedido else 0, f"${v.total_paid:.2f}", estado])
 
-    for row_num, row_data in enumerate(data, 2):
+    for row_num, row_data in enumerate(data, 4):
         for col_num, cell_value in enumerate(row_data, 1):
             cell = ws.cell(row=row_num, column=col_num, value=cell_value)
             cell.alignment = center_align
             cell.border = border
 
-    for col in ws.columns:
+    from openpyxl.utils import get_column_letter
+    for idx, col in enumerate(ws.columns, 1):
         max_length = 0
-        column = col[0].column_letter
+        column = get_column_letter(idx)
         for cell in col:
             try:
                 if len(str(cell.value)) > max_length: max_length = len(str(cell.value))
@@ -865,7 +930,7 @@ def exportar_historial_pdf(start_date: Optional[str] = Query(None), end_date: Op
         mesero = pedido.waiter.name if pedido and pedido.waiter else v.cashier_email
         estado = pedido.status if pedido else "PAGADO"
         dt_str = f"{v.date.strftime('%Y-%m-%d')}\n{v.hour.strftime('%H:%M:%S')}"
-        data.append([str(v.ticket_id), Paragraph(dt_str, styles["Normal"]), cliente, mesa, mesero, str(len(pedido.detalles) if pedido else 0), f"", estado])
+        data.append([str(v.ticket_id), Paragraph(dt_str, styles["Normal"]), cliente, mesa, mesero, str(len(pedido.detalles) if pedido else 0), f"${v.total_paid:.2f}", estado])
     
     t = Table(data, colWidths=[40, 90, 110, 60, 110, 60, 80, 80])
     t.setStyle(TableStyle([
@@ -885,8 +950,7 @@ def exportar_historial_pdf(start_date: Optional[str] = Query(None), end_date: Op
             
     elementos.append(t)
     doc.build(elementos)
-    
-    return FileResponse(file_path, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=historial_ventas.pdf"})
+    return FileResponse(file_path, media_type="application/pdf", headers={"Content-Disposition": "inline; filename=historial_ventas.pdf"})
 
 
 @router.get("/pedidos/{pedido_id}/detalles")
@@ -924,3 +988,114 @@ def get_pedido_detalles(pedido_id: int, db: Session = Depends(get_db)):
         "total": venta.total_paid if venta else sum(i["importe"] for i in items),
         "estado": pedido.status
     }
+
+@router.get("/graficas/excel")
+def exportar_graficas_excel(periodo: str = "ESTEMES", db: Session = Depends(get_db)):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    import tempfile
+    import os
+    
+    fin_data = get_reporte_financiero(periodo, db)
+    prod_data = get_reporte_productos(periodo, db)
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Reporte_Financiero"
+    
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="90694a", end_color="90694a", fill_type="solid")
+    center_align = Alignment(horizontal="center", vertical="center")
+    border = Border(left=Side(style='thin', color='d3b895'), 
+                    right=Side(style='thin', color='d3b895'), 
+                    top=Side(style='thin', color='d3b895'), 
+                    bottom=Side(style='thin', color='d3b895'))
+                    
+    ws.append(["Periodo", "Ingresos", "Costos Insumos", "Gasto Operativo", "Utilidad Neta"])
+    for col_num in range(1, 6):
+        cell = ws.cell(row=1, column=col_num)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_align
+        cell.border = border
+        
+    for idx, s in enumerate(fin_data['semanas'], 2):
+        ws.cell(row=idx, column=1, value=s['periodo'])
+        ws.cell(row=idx, column=2, value=float(s['ventas_brutas']))
+        ws.cell(row=idx, column=3, value=float(s['costo_insumos']))
+        ws.cell(row=idx, column=4, value=float(s['gasto_operativo']))
+        ws.cell(row=idx, column=5, value=float(s['utilidad_neta']))
+        
+    ws2 = wb.create_sheet(title="Top_Productos")
+    ws2.append(["Producto", "Categoría", "Unidades Vendidas", "Recaudación"])
+    for col_num in range(1, 5):
+        cell = ws2.cell(row=1, column=col_num)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_align
+        cell.border = border
+        
+    for idx, p in enumerate(prod_data[:10], 2):
+        ws2.cell(row=idx, column=1, value=p['name'])
+        ws2.cell(row=idx, column=2, value=p['category'])
+        ws2.cell(row=idx, column=3, value=p['units_sold'])
+        ws2.cell(row=idx, column=4, value=float(p['revenue']))
+        
+    file_path = os.path.join(tempfile.gettempdir(), "reporte_graficas.xlsx")
+    wb.save(file_path)
+    return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": "attachment; filename=\"reporte_graficas.xlsx\""})
+
+
+@router.get("/graficas/pdf")
+def exportar_graficas_pdf(periodo: str = "ESTEMES", db: Session = Depends(get_db)):
+    from reportlab.lib.styles import ParagraphStyle
+    import tempfile
+    import os
+    
+    fin_data = get_reporte_financiero(periodo, db)
+    prod_data = get_reporte_productos(periodo, db)
+    
+    file_path = os.path.join(tempfile.gettempdir(), "reporte_graficas.pdf")
+    doc = SimpleDocTemplate(file_path, rightMargin=30, leftMargin=30, topMargin=50, bottomMargin=50, title="Reporte Gráficas", author="Coffee-Code")
+    elementos = []
+    
+    title_style = ParagraphStyle(name="TitleStyle", fontSize=16, textColor=colors.HexColor("#90694a"), alignment=1, fontName="Helvetica-Bold")
+    elementos.append(Paragraph(r"Resumen Financiero Mensual", title_style))
+    elementos.append(Spacer(1, 15))
+    
+    data_fin = [["Periodo", "Ingresos", "Costos Insumos", "Gasto Operativo", "Utilidad Neta"]]
+    for s in fin_data['semanas']:
+        data_fin.append([s['periodo'], f"${s['ventas_brutas']:.2f}", f"${s['costo_insumos']:.2f}", f"${s['gasto_operativo']:.2f}", f"${s['utilidad_neta']:.2f}"])
+        
+    t_fin = Table(data_fin, colWidths=[100, 100, 100, 100, 100])
+    t_fin.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#90694a")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        ('GRID', (0,0), (-1,-1), 1, colors.HexColor("#d3b895"))
+    ]))
+    elementos.append(t_fin)
+    elementos.append(Spacer(1, 30))
+    
+    elementos.append(Paragraph(r"Top 10 Productos Más Vendidos", title_style))
+    elementos.append(Spacer(1, 15))
+    
+    data_prod = [["Producto", "Categoría", "Unidades Vendidas", "Recaudación"]]
+    for p in prod_data[:10]:
+        data_prod.append([p['name'], p['category'], str(p['units_sold']), f"${p['revenue']:.2f}"])
+        
+    t_prod = Table(data_prod, colWidths=[150, 100, 100, 100])
+    t_prod.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#90694a")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        ('GRID', (0,0), (-1,-1), 1, colors.HexColor("#d3b895"))
+    ]))
+    elementos.append(t_prod)
+    
+    doc.build(elementos)
+    return FileResponse(file_path, media_type="application/pdf", headers={"Content-Disposition": "inline; filename=\"reporte_graficas.pdf\""})
