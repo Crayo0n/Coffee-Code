@@ -6,6 +6,8 @@
   <title>{% block title %}Panel de Administración - Coffee-Code{% endblock %}</title>
   <meta name="description" content="Dashboard general de Coffee-Code para control administrativo, usuarios, roles y reportes estadísticos.">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  {% block head %}{% endblock %}
 </head>
 <body>
 
@@ -41,6 +43,14 @@
               <span>Personal</span>
             </a>
           </li>
+          <li class="navbar-menu-item {% if active_page == 'estadisticas' %}active{% endif %}" data-tab="tab-estadisticas">
+            <a href="/estadisticas">
+              <span class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-pie-chart"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+              </span>
+              <span>Estadísticas</span>
+            </a>
+          </li>
           <li class="navbar-menu-item {% if active_page == 'inventario' %}active{% endif %}" data-tab="tab-inventario">
             <a href="/inventario">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -55,14 +65,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
               </svg>
               <span>Mesas</span>
-            </a>
-          </li>
-          <li class="navbar-menu-item {% if active_page == 'estadisticas' %}active{% endif %}" data-tab="tab-estadisticas">
-            <a href="/estadisticas">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              <span>Estadísticas</span>
             </a>
           </li>
         </ul>
@@ -211,9 +213,14 @@
   {# ---- Flash Messages de Flask ---- #}
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
+    <script id="flash-data" type="application/json">
+      {{ messages | tojson }}
+    </script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        const flashQueue = {{ messages | tojson }};
+        const rawData = document.getElementById('flash-data').textContent;
+        if (!rawData) return;
+        const flashQueue = JSON.parse(rawData);
         let delay = 100;
         flashQueue.forEach(function([category, message]) {
           setTimeout(function() { showToast(message, category); }, delay);
@@ -223,5 +230,7 @@
     </script>
     {% endif %}
   {% endwith %}
+
+  {% block scripts %}{% endblock %}
 </body>
 </html>

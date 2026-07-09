@@ -61,7 +61,7 @@ def cobrar_pedido(
     pedido.status = "PAGADO"
     
     # 6. Liberar la mesa física
-    pedido.mesa.status = "available"
+    pedido.mesa.status = "Libre"
     
     db.commit()
     db.refresh(ticket)

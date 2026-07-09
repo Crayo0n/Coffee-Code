@@ -389,70 +389,33 @@ def eliminar_producto(id):
         
     return redirect(url_for('inventario'))
 
-# --- RUTA ESTADÍSTICAS (REPORTES) ---
+# --- RUTA ESTADÍSTICAS ---
 @app.route('/estadisticas')
 @login_required
 def estadisticas():
-    headers = {"Authorization": f"Bearer {session['token']}"}
-    reporte_financiero = {
-        'ventas_brutas': 0.0, 'costo_insumos': 0.0, 'gasto_operativo': 0.0, 'utilidad_neta': 0.0, 'porcentaje_neto': 0.0,
-        'semanas': [], 'historico': []
-    }
-    reporte_productos = []
-    reporte_flujo = {
-        'metodos_pago': {'tarjeta_porcentaje': 0, 'efectivo_porcentaje': 0, 'tarjeta_tickets': 0, 'efectivo_tickets': 0},
-        'origen_pedidos': {'expo_pedidos': 0, 'expo_porcentaje': 0, 'caja_pedidos': 0, 'caja_porcentaje': 0},
-        'bloques': []
-    }
+    token = session.get('token')
+    headers = {"Authorization": f"Bearer {token}"}
     
-    periodo_filtro = request.args.get('periodo', 'ESTEMES')
-    api_params = {"periodo": periodo_filtro}
+    kpis = {}
+    historial = []
     
     try:
-        # 1. Reporte financiero (Libro Auxiliar)
-        fin_resp = requests.get(f"{API_URL}/estadisticas/reporte-financiero", headers=headers, params=api_params)
-        if fin_resp.status_code == 200:
-            reporte_financiero = fin_resp.json()
-            for key in ['ventas_brutas', 'costo_insumos', 'gasto_operativo', 'utilidad_neta']:
-                if key in reporte_financiero:
-                    reporte_financiero[key] = float(reporte_financiero[key] or 0.0)
-            if 'semanas' in reporte_financiero:
-                for s in reporte_financiero['semanas']:
-                    for key in ['ventas_brutas', 'costo_insumos', 'gasto_operativo', 'utilidad_neta']:
-                        if key in s:
-                            s[key] = float(s[key] or 0.0)
-            if 'historico' in reporte_financiero:
-                for h in reporte_financiero['historico']:
-                    for key in ['ventas_brutas', 'costo_insumos', 'gasto_operativo', 'utilidad_neta']:
-                        if key in h:
-                            h[key] = float(h[key] or 0.0)
-            
-        # 2. Popularidad del catálogo
-        prod_resp = requests.get(f"{API_URL}/estadisticas/reporte-productos", headers=headers, params=api_params)
-        if prod_resp.status_code == 200:
-            reporte_productos = prod_resp.json()
-            for p in reporte_productos:
-                for key in ['price', 'revenue', 'cost_unit', 'margin_unit']:
-                    if key in p:
-                        p[key] = float(p[key] or 0.0)
-            
-        # 3. Flujo horario y métodos de pago
-        flujo_resp = requests.get(f"{API_URL}/estadisticas/reporte-flujo", headers=headers, params=api_params)
-        if flujo_resp.status_code == 200:
-            reporte_flujo = flujo_resp.json()
-            if 'bloques' in reporte_flujo:
-                for b in reporte_flujo['bloques']:
-                    if 'volumen_ventas' in b:
-                        b['volumen_ventas'] = float(b['volumen_ventas'] or 0.0)
-                    if 'tiempo_prep' in b:
-                        try:
-                            b['tiempo_prep'] = float(b['tiempo_prep'] or 0.0)
-                        except (ValueError, TypeError):
-                            pass  # Si es 'N/A' u otro string, mantenerlo como está
-            
-    except requests.exceptions.RequestException as e:
-        print("Error de conexión a la API:", e)
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        params = {}
+        if start_date: params['start_date'] = start_date
+        if end_date: params['end_date'] = end_date
         
+        kpis_resp = requests.get(f"{API_URL}/estadisticas/kpis", headers=headers, params=params)
+        if kpis_resp.status_code == 200:
+            kpis = kpis_resp.json()
+            
+        hist_resp = requests.get(f"{API_URL}/estadisticas/historial", headers=headers, params=params)
+        if hist_resp.status_code == 200:
+            historial = hist_resp.json().get("historial", [])
+    except Exception as e:
+        flash(f"Error al cargar estadísticas: {str(e)}", "error")
+
     import datetime
     meses_es = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
     today = datetime.date.today()
@@ -462,12 +425,12 @@ def estadisticas():
     return render_template(
         'estadisticas.html',
         active_page='estadisticas',
-        finanzas=reporte_financiero,
-        productos=reporte_productos,
-        flujo=reporte_flujo,
+        kpis=kpis,
+        historial=historial,
         mes_actual=mes_actual,
         periodo_actual=periodo_actual,
-        periodo_filtro=periodo_filtro
+        start_date=start_date,
+        end_date=end_date
     )
 
 if __name__ == '__main__':

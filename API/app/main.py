@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .data.database import engine, Base
-from .routers import auth, colaboradores, productos, mesas, pedidos, ventas, estadisticas, alertas
+from .routers import auth, colaboradores, productos, mesas, pedidos, ventas, alertas, estadisticas
 from .data.seed import seed_database
 
 # Crear las tablas relacionales al iniciar la API si no existen
@@ -29,8 +29,8 @@ app.include_router(productos.router)
 app.include_router(mesas.router)
 app.include_router(pedidos.router)
 app.include_router(ventas.router)
-app.include_router(estadisticas.router)
 app.include_router(alertas.router)
+app.include_router(estadisticas.router)
 
 @app.on_event("startup")
 def startup_populate():

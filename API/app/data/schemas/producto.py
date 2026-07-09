@@ -10,7 +10,7 @@ class ProductoBase(BaseModel):
     category_id: int
     status_id: int
     stock: int = 50
-    photo: str
+    photo: Optional[str] = None
     description: Optional[str] = None
 
 class ProductoCreate(ProductoBase):

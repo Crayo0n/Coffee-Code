@@ -2,7 +2,7 @@ import datetime
 from decimal import Decimal
 from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import func
+from sqlalchemy import extract, func, case, desc
 from sqlalchemy.orm import Session
 from app.data.database import get_db
 from app.models.historial_venta import HistorialVenta
@@ -270,4 +270,657 @@ def get_reporte_flujo(periodo: str = "ESTEMES", db: Session = Depends(get_db)):
             "caja_porcentaje": caja_pct
         },
         "bloques": bloques
+    }
+
+from typing import Optional
+from fastapi import Query
+from fastapi.responses import FileResponse
+import os
+import tempfile
+import pandas as pd
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+
+# === RECOVERED AND NEW ENDPOINTS ===
+
+@router.get("/kpis")
+def get_kpis(start_date: Optional[str] = Query(None), end_date: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    query_sales = db.query(func.sum(HistorialVenta.total_paid))
+    query_orders = db.query(Pedido).join(HistorialVenta, Pedido.id == HistorialVenta.order_id)
+    
+    if start_date:
+        query_sales = query_sales.filter(HistorialVenta.date >= start_date)
+        query_orders = query_orders.filter(HistorialVenta.date >= start_date)
+    if end_date:
+        query_sales = query_sales.filter(HistorialVenta.date <= end_date)
+        query_orders = query_orders.filter(HistorialVenta.date <= end_date)
+        
+    sales_sum = query_sales.scalar()
+    ventas_del_dia = Decimal(str(sales_sum)) if sales_sum else Decimal("0.00")
+    
+    tickets_emitidos = query_orders.count()
+    ticket_promedio = (ventas_del_dia / tickets_emitidos) if tickets_emitidos > 0 else Decimal("0.00")
+    
+    valor_inventario = db.query(func.sum(Producto.price * Producto.stock)).scalar() or Decimal("0.00")
+    
+    return {
+        "ventas_del_dia": ventas_del_dia,
+        "tickets_emitidos": tickets_emitidos,
+        "ticket_promedio": ticket_promedio,
+        "valor_inventario": valor_inventario
+    }
+
+@router.get("/historial")
+def get_historial(start_date: Optional[str] = Query(None), end_date: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    query = db.query(HistorialVenta)
+    if start_date:
+        query = query.filter(HistorialVenta.date >= start_date)
+    if end_date:
+        query = query.filter(HistorialVenta.date <= end_date)
+        
+    ventas = query.order_by(HistorialVenta.ticket_id.desc()).all()
+    
+    historial = []
+    for v in ventas:
+        pedido = db.query(Pedido).filter(Pedido.id == v.order_id).first()
+        cliente = "Público en General"
+        mesa = v.table_name
+        mesero = "Caja" # Simplification for now
+        if pedido and pedido.waiter_id:
+            colab = db.query(Colaborador).filter(Colaborador.id == pedido.waiter_id).first()
+            if colab:
+                mesero = colab.name
+                
+        articulos = len(pedido.detalles) if pedido else 0
+        
+        historial.append({
+            "id": v.ticket_id,
+            "order_id": v.order_id,
+            "fecha_hora": f"{v.date.strftime('%Y-%m-%d')}, {v.hour.strftime('%H:%M:%S')}",
+            "cliente": cliente,
+            "mesa": mesa,
+            "mesero": mesero,
+            "articulos": articulos,
+            "total": float(v.total_paid),
+            "estado": pedido.status if pedido else "Completado"
+        })
+        
+    return {"historial": historial}
+
+@router.get("/pedidos/excel")
+def exportar_pedidos_excel(start_date: Optional[str] = Query(None), end_date: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    query = db.query(Pedido).join(HistorialVenta, Pedido.id == HistorialVenta.order_id)
+    if start_date:
+        query = query.filter(HistorialVenta.date >= start_date)
+    if end_date:
+        query = query.filter(HistorialVenta.date <= end_date)
+    pedidos = query.all()
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Reporte_Pedidos"
+    
+    # Estilos
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="90694a", end_color="90694a", fill_type="solid")
+    center_align = Alignment(horizontal="center", vertical="center")
+    border = Border(left=Side(style='thin', color='d3b895'), 
+                    right=Side(style='thin', color='d3b895'), 
+                    top=Side(style='thin', color='d3b895'), 
+                    bottom=Side(style='thin', color='d3b895'))
+
+    headers = ['ID Pedido', 'Mesa', 'Estado', 'Artículos']
+    
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_align
+        cell.border = border
+
+    
+    data = []
+    for p in pedidos:
+        mesa_txt = p.table_name if p.table_name else "Mostrador"
+        data.append([p.id, mesa_txt, p.status, len(p.detalles)])
+
+
+    for row_num, row_data in enumerate(data, 2):
+        for col_num, cell_value in enumerate(row_data, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=cell_value)
+            cell.alignment = center_align
+            cell.border = border
+            
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 4)
+        ws.column_dimensions[column].width = adjusted_width
+
+    file_path = os.path.join(tempfile.gettempdir(), "reporte_pedidos.xlsx")
+    wb.save(file_path)
+    return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": f"attachment; filename=\"reporte_pedidos.xlsx\""})
+
+@router.get("/pedidos/pdf")
+def exportar_pedidos_pdf(start_date: Optional[str] = Query(None), end_date: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    from reportlab.lib.styles import ParagraphStyle
+    query = db.query(Pedido).join(HistorialVenta, Pedido.id == HistorialVenta.order_id)
+    if start_date:
+        query = query.filter(HistorialVenta.date >= start_date)
+    if end_date:
+        query = query.filter(HistorialVenta.date <= end_date)
+    pedidos = query.all()
+    
+    file_path = os.path.join(tempfile.gettempdir(), "reporte_pedidos.pdf")
+    doc = SimpleDocTemplate(file_path, rightMargin=30, leftMargin=30, topMargin=50, bottomMargin=50, title="Pedidos", author="Coffee-Code")
+    elementos = []
+    
+    from reportlab.platypus import Image
+    logo_path = r"/code/app/assets/logo.png"
+    logo = Image(logo_path, width=60, height=60) if __import__('os').path.exists(logo_path) else ""
+    title_style = ParagraphStyle(name="TitleStyle", fontSize=18, textColor=colors.HexColor("#90694a"), alignment=1, fontName="Helvetica-Bold")
+    title_p = Paragraph(r"Reporte de Pedidos", title_style)
+    header_table = Table([[logo, title_p, ""]], colWidths=[80, 400, 80])
+    header_table.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE')]))
+    elementos.append(header_table)
+    elementos.append(Spacer(1, 15))
+    
+    data = [["ID Pedido", "Mesa", "Estado", "Artículos"]]
+    for p in pedidos:
+        mesa_txt = p.table_name if p.table_name else "Mostrador"
+        data.append([str(p.id), mesa_txt, str(p.status), str(len(p.detalles))])
+        
+    t = Table(data, colWidths=[80, 150, 150, 100])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#90694a")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#fcf7fb")),
+        ('GRID', (0,0), (-1,-1), 1, colors.HexColor("#d3b895"))
+    ]))
+    elementos.append(t)
+    doc.build(elementos)
+    return FileResponse(file_path, media_type="application/pdf", headers={"Content-Disposition": "inline; filename=\"reporte_pedidos.pdf\""})
+
+@router.get("/productos/excel")
+def exportar_productos_excel(categoria: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    query = db.query(Producto)
+    if categoria and categoria != "ALL":
+        query = query.join(Categoria).filter(Categoria.name == categoria)
+    productos = query.all()
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Reporte_Productos"
+    
+    # Estilos
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="90694a", end_color="90694a", fill_type="solid")
+    center_align = Alignment(horizontal="center", vertical="center")
+    border = Border(left=Side(style='thin', color='d3b895'), 
+                    right=Side(style='thin', color='d3b895'), 
+                    top=Side(style='thin', color='d3b895'), 
+                    bottom=Side(style='thin', color='d3b895'))
+
+    headers = ['ID Producto', 'Nombre', 'Categoría', 'Precio']
+    
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_align
+        cell.border = border
+
+    
+    data = []
+    for p in productos:
+        cat_name = p.categoria.name if p.categoria else "General"
+        data.append([p.id, p.name, cat_name, float(p.price)])
+
+
+    for row_num, row_data in enumerate(data, 2):
+        for col_num, cell_value in enumerate(row_data, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=cell_value)
+            cell.alignment = center_align
+            cell.border = border
+            
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 4)
+        ws.column_dimensions[column].width = adjusted_width
+
+    file_path = os.path.join(tempfile.gettempdir(), "reporte_productos.xlsx")
+    wb.save(file_path)
+    return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": f"attachment; filename=\"reporte_productos.xlsx\""})
+
+@router.get("/productos/pdf")
+def exportar_productos_pdf(categoria: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    from reportlab.lib.styles import ParagraphStyle
+    query = db.query(Producto)
+    if categoria and categoria != "ALL":
+        query = query.join(Categoria).filter(Categoria.name == categoria)
+    productos = query.all()
+    
+    file_path = os.path.join(tempfile.gettempdir(), "reporte_catalogo.pdf")
+    doc = SimpleDocTemplate(file_path, rightMargin=30, leftMargin=30, topMargin=50, bottomMargin=50, title="Reporte Coffee-Code", author="Coffee-Code")
+    elementos = []
+    
+    from reportlab.platypus import Image
+    logo_path = r"/code/app/assets/logo.png"
+    logo = Image(logo_path, width=60, height=60) if __import__('os').path.exists(logo_path) else ""
+    title_style = ParagraphStyle(name="TitleStyle", fontSize=18, textColor=colors.HexColor("#90694a"), alignment=1, fontName="Helvetica-Bold")
+    title_p = Paragraph(r"Catálogo de Productos", title_style)
+    header_table = Table([[logo, title_p, ""]], colWidths=[80, 400, 80])
+    header_table.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE')]))
+    elementos.append(header_table)
+    elementos.append(Spacer(1, 15))
+    
+    data = [["ID", "Producto", "Categoría", "Precio"]]
+    for p in productos:
+        cat_name = p.categoria.name if p.categoria else "General"
+        data.append([str(p.id), p.name, cat_name, f"${p.price:.2f}"])
+        
+    t = Table(data, colWidths=[50, 200, 150, 100])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#90694a")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#fcf7fb")),
+        ('GRID', (0,0), (-1,-1), 1, colors.HexColor("#d3b895"))
+    ]))
+    elementos.append(t)
+    doc.build(elementos)
+    return FileResponse(file_path, media_type="application/pdf", headers={"Content-Disposition": "inline; filename=\"reporte_catalogo.pdf\""})
+
+@router.get("/kpis/excel")
+def exportar_kpis_excel(start_date: Optional[str] = Query(None), end_date: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    kpis = get_kpis(start_date, end_date, db)
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Reporte_KPIs"
+    
+    # Estilos
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="90694a", end_color="90694a", fill_type="solid")
+    center_align = Alignment(horizontal="center", vertical="center")
+    border = Border(left=Side(style='thin', color='d3b895'), 
+                    right=Side(style='thin', color='d3b895'), 
+                    top=Side(style='thin', color='d3b895'), 
+                    bottom=Side(style='thin', color='d3b895'))
+
+    headers = ['Métrica', 'Valor']
+    
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_align
+        cell.border = border
+
+    
+    data = [
+        ["Ventas del Día", kpis['ventas_del_dia']],
+        ["Tickets Emitidos", kpis['tickets_emitidos']],
+        ["Ticket Promedio", kpis['ticket_promedio']],
+        ["Valor de Inventario", kpis['valor_inventario']]
+    ]
+
+
+    for row_num, row_data in enumerate(data, 2):
+        for col_num, cell_value in enumerate(row_data, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=cell_value)
+            cell.alignment = center_align
+            cell.border = border
+            
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 4)
+        ws.column_dimensions[column].width = adjusted_width
+
+    file_path = os.path.join(tempfile.gettempdir(), "reporte_kpis.xlsx")
+    wb.save(file_path)
+    return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": f"attachment; filename=\"reporte_kpis.xlsx\""})
+
+@router.get("/kpis/pdf")
+def exportar_kpis_pdf(start_date: Optional[str] = Query(None), end_date: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    from reportlab.lib.styles import ParagraphStyle
+    kpis = get_kpis(start_date, end_date, db)
+    file_path = os.path.join(tempfile.gettempdir(), "reporte_kpis.pdf")
+    doc = SimpleDocTemplate(file_path, rightMargin=30, leftMargin=30, topMargin=50, bottomMargin=50, title="Reporte Coffee-Code", author="Coffee-Code")
+    elementos = []
+    from reportlab.platypus import Image
+    logo_path = r"/code/app/assets/logo.png"
+    logo = Image(logo_path, width=60, height=60) if __import__('os').path.exists(logo_path) else ""
+    title_style = ParagraphStyle(name="TitleStyle", fontSize=18, textColor=colors.HexColor("#90694a"), alignment=1, fontName="Helvetica-Bold")
+    title_p = Paragraph(r"Reporte de KPIs", title_style)
+    header_table = Table([[logo, title_p, ""]], colWidths=[80, 400, 80])
+    header_table.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE')]))
+    elementos.append(header_table)
+    elementos.append(Spacer(1, 15))
+    
+    data = [
+        ["Métrica", "Valor"],
+        ["Ventas del Día", f"${kpis['ventas_del_dia']:.2f}"],
+        ["Tickets Emitidos", str(kpis['tickets_emitidos'])],
+        ["Ticket Promedio", f"${kpis['ticket_promedio']:.2f}"],
+        ["Valor de Inventario", f"${kpis['valor_inventario']:.2f}"]
+    ]
+    
+    t = Table(data, colWidths=[200, 200])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#90694a")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#fcf7fb")),
+        ('GRID', (0,0), (-1,-1), 1, colors.HexColor("#d3b895"))
+    ]))
+    elementos.append(t)
+    doc.build(elementos)
+    return FileResponse(file_path, media_type="application/pdf", headers={"Content-Disposition": "inline; filename=\"reporte_kpis.pdf\""})
+
+
+
+@router.get("/pedidos/{pedido_id}/ticket/pdf")
+def exportar_ticket_pdf(pedido_id: int, db: Session = Depends(get_db)):
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+    from reportlab.lib import colors
+    
+    pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
+    if not pedido: return {"error": "Pedido no encontrado"}
+    
+    venta = db.query(HistorialVenta).filter(HistorialVenta.order_id == pedido_id).first()
+    detalles = db.query(DetallePedido).filter(DetallePedido.order_id == pedido_id).all()
+    productos = {p.id: p for p in db.query(Producto).all()}
+    
+    import tempfile, os
+    file_path = os.path.join(tempfile.gettempdir(), f"ticket_{pedido_id}.pdf")
+    
+    # We use letter size but with large margins to simulate a centered ticket on the page
+    doc = SimpleDocTemplate(file_path, pagesize=letter, rightMargin=150, leftMargin=150, topMargin=50, bottomMargin=50, title=f"Ticket Pedido #{pedido_id}", author="Coffee-Code")
+    elementos = []
+    
+    styles = getSampleStyleSheet()
+    center_style = ParagraphStyle(name="Center", alignment=1)
+    title_style = ParagraphStyle(name="Title", alignment=1, fontSize=18, textColor=colors.HexColor("#90694a"), fontName="Helvetica-Bold", spaceAfter=5)
+    
+    # Logo
+    logo_path = r"/code/app/assets/logo.png"
+    if os.path.exists(logo_path):
+        img = Image(logo_path, width=80, height=80)
+        img.hAlign = 'CENTER'
+        elementos.append(img)
+        elementos.append(Spacer(1, 10))
+        
+    fecha_str = f"{venta.date} {venta.hour}" if venta else "N/A"
+    estado_str = pedido.status.upper() if pedido.status else "COMPLETADO"
+    mesa_str = venta.table_name if venta else (pedido.table_name or "Mostrador")
+    mesero_str = pedido.waiter.name if pedido.waiter else "Caja"
+    
+    # Header text
+    elementos.append(Paragraph("Coffee-Code", title_style))
+    elementos.append(Paragraph("Ticket de Venta", center_style))
+    elementos.append(Paragraph(f"<font size=10>ID: {pedido_id} | {fecha_str}</font>", center_style))
+    elementos.append(Spacer(1, 15))
+    
+    # Client Info
+    info_style = ParagraphStyle(name="Info", fontSize=11, leading=14)
+    elementos.append(Paragraph(f"<b>Cliente:</b> Público en General", info_style))
+    elementos.append(Paragraph(f"<b>Mesa:</b> {mesa_str}", info_style))
+    elementos.append(Paragraph(f"<b>Mesero:</b> {mesero_str}", info_style))
+    elementos.append(Paragraph(f"<b>Estado:</b> {estado_str}", info_style))
+    elementos.append(Spacer(1, 15))
+    
+    # Table headers
+    tabla_data = [["Cant", "Art", "Total"]]
+    total = 0
+    
+    for d in detalles:
+        p = productos.get(d.product_id)
+        if p:
+            sub = float(p.price) * int(d.quantity)
+            total += sub
+            tabla_data.append([str(d.quantity), p.name, f"${sub:.2f}"])
+            
+    # Items Table
+    t = Table(tabla_data, colWidths=[40, 160, 80])
+    t.setStyle(TableStyle([
+        ('LINEBELOW', (0,0), (-1,0), 1, colors.HexColor("#dddddd")),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('ALIGN', (2,0), (2,-1), 'RIGHT'),
+        ('PADDING', (0,0), (-1,-1), 6)
+    ]))
+    elementos.append(t)
+    elementos.append(Spacer(1, 10))
+    
+    # Totals
+    total_data = []
+    if venta and venta.tips:
+        total_data.append(["Propina:", f"${float(venta.tips):.2f}"])
+        total += float(venta.tips)
+    total_data.append(["TOTAL:", f"${total:.2f}"])
+    
+    total_table = Table(total_data, colWidths=[100, 80])
+    total_table.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'RIGHT'),
+        ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,-1), (-1,-1), 12),
+        ('LINEABOVE', (0,-1), (-1,-1), 1, colors.HexColor("#352728")),
+        ('TOPPADDING', (0,-1), (-1,-1), 8)
+    ]))
+    
+    layout = Table([["", total_table]], colWidths=[100, 180])
+    elementos.append(layout)
+    
+    elementos.append(Spacer(1, 30))
+    elementos.append(Paragraph("<font size=10 color='#888888'>¡Gracias por su compra!</font>", center_style))
+    
+    doc.build(elementos)
+    return FileResponse(file_path, media_type="application/pdf", headers={"Content-Disposition": f"inline; filename=\"ticket_{pedido_id}.pdf\""})
+
+
+@router.get("/historial/excel")
+def exportar_historial_excel(start_date: Optional[str] = Query(None), end_date: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    query = db.query(HistorialVenta)
+    if start_date: query = query.filter(HistorialVenta.date >= start_date)
+    if end_date: query = query.filter(HistorialVenta.date <= end_date)
+    ventas = query.order_by(desc(HistorialVenta.date), desc(HistorialVenta.hour)).all()
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Historial_Ventas"
+    
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="90694a", end_color="90694a", fill_type="solid")
+    center_align = Alignment(horizontal="center", vertical="center")
+    border = Border(left=Side(style='thin', color='d3b895'), right=Side(style='thin', color='d3b895'), top=Side(style='thin', color='d3b895'), bottom=Side(style='thin', color='d3b895'))
+
+    headers = ['ID Venta', 'Fecha y Hora', 'Cliente', 'Mesa', 'Mesero', 'Artículos', 'Total', 'Estado']
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_align
+        cell.border = border
+
+    data = []
+    for v in ventas:
+        pedido = db.query(Pedido).filter(Pedido.id == v.order_id).first()
+        cliente = "Público en General"
+        mesa = v.table_name
+        mesero = pedido.waiter.name if pedido and pedido.waiter else v.cashier_email
+        estado = pedido.status if pedido else "PAGADO"
+        dt_str = f"{v.date.strftime('%Y-%m-%d')} {v.hour.strftime('%H:%M:%S')}"
+        data.append([v.ticket_id, dt_str, cliente, mesa, mesero, len(pedido.detalles) if pedido else 0, v.total_paid, estado])
+
+    for row_num, row_data in enumerate(data, 2):
+        for col_num, cell_value in enumerate(row_data, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=cell_value)
+            cell.alignment = center_align
+            cell.border = border
+
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length: max_length = len(str(cell.value))
+            except: pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
+
+    import tempfile, os
+    file_path = os.path.join(tempfile.gettempdir(), "historial_ventas.xlsx")
+    wb.save(file_path)
+    return FileResponse(file_path, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": "attachment; filename=historial_ventas.xlsx"})
+
+
+@router.get("/historial/pdf")
+def exportar_historial_pdf(start_date: Optional[str] = Query(None), end_date: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    query = db.query(HistorialVenta)
+    if start_date: query = query.filter(HistorialVenta.date >= start_date)
+    if end_date: query = query.filter(HistorialVenta.date <= end_date)
+    ventas = query.order_by(desc(HistorialVenta.date), desc(HistorialVenta.hour)).all()
+
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    
+    import tempfile, os
+    file_path = os.path.join(tempfile.gettempdir(), "historial_ventas.pdf")
+    doc = SimpleDocTemplate(file_path, pagesize=landscape(letter), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    
+    styles = getSampleStyleSheet()
+    elementos = []
+    
+    
+    from reportlab.platypus import Image
+    logo_path = r"/code/app/assets/logo.png"
+    logo = Image(logo_path, width=60, height=60) if __import__('os').path.exists(logo_path) else ""
+    title_style = ParagraphStyle(name="TitleStyle", fontSize=18, textColor=colors.HexColor("#90694a"), alignment=1, fontName="Helvetica-Bold")
+    title_p = Paragraph(r"Reporte de Historial de Ventas", title_style)
+    header_table = Table([[logo, title_p, ""]], colWidths=[80, 540, 80])
+    header_table.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE')]))
+    elementos.append(header_table)
+    elementos.append(Spacer(1, 15))
+
+    
+    periodo_str = "Periodo: Todos los registros"
+    if start_date and end_date: periodo_str = f"Periodo: {start_date} al {end_date}"
+    elif start_date: periodo_str = f"Periodo: Desde {start_date}"
+    elif end_date: periodo_str = f"Periodo: Hasta {end_date}"
+    
+    subtitle_style = ParagraphStyle(name="SubTitle", fontSize=12, textColor=colors.HexColor("#555555"), spaceAfter=20, alignment=1)
+    elementos.append(Paragraph(periodo_str, subtitle_style))
+    
+    data = [['ID', 'Fecha y Hora', 'Cliente', 'Mesa', 'Mesero', 'Artículos', 'Total', 'Estado']]
+    
+    for v in ventas:
+        pedido = db.query(Pedido).filter(Pedido.id == v.order_id).first()
+        cliente = "Público en General"
+        mesa = v.table_name
+        mesero = pedido.waiter.name if pedido and pedido.waiter else v.cashier_email
+        estado = pedido.status if pedido else "PAGADO"
+        dt_str = f"{v.date.strftime('%Y-%m-%d')}\n{v.hour.strftime('%H:%M:%S')}"
+        data.append([str(v.ticket_id), Paragraph(dt_str, styles["Normal"]), cliente, mesa, mesero, str(len(pedido.detalles) if pedido else 0), f"", estado])
+    
+    t = Table(data, colWidths=[40, 90, 110, 60, 110, 60, 80, 80])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#90694a")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('INNERGRID', (0,0), (-1,-1), 0.25, colors.HexColor("#d3b895")),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#90694a")),
+        ('PADDING', (0,0), (-1,-1), 8)
+    ]))
+    
+    for i in range(1, len(data)):
+        if i % 2 == 0:
+            t.setStyle(TableStyle([('BACKGROUND', (0,i), (-1,i), colors.HexColor("#fcf7fb"))]))
+            
+    elementos.append(t)
+    doc.build(elementos)
+    
+    return FileResponse(file_path, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=historial_ventas.pdf"})
+
+
+@router.get("/pedidos/{pedido_id}/detalles")
+def get_pedido_detalles(pedido_id: int, db: Session = Depends(get_db)):
+    pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
+    if not pedido: return {"error": "Pedido no encontrado"}
+    
+    venta = db.query(HistorialVenta).filter(HistorialVenta.order_id == pedido_id).first()
+    detalles = db.query(DetallePedido).filter(DetallePedido.order_id == pedido_id).all()
+    productos = {p.id: p for p in db.query(Producto).all()}
+    
+    items = []
+    for d in detalles:
+        p = productos.get(d.product_id)
+        if p:
+            items.append({
+                "nombre": p.name,
+                "cantidad": d.quantity,
+                "precio": float(p.price),
+                "importe": float(p.price) * int(d.quantity)
+            })
+            
+    cliente = "Público en General"
+    mesa = venta.table_name if venta else (pedido.table_name if pedido.table_name else "Mostrador")
+    mesero = pedido.waiter.name if pedido.waiter else "Caja"
+    
+    return {
+        "id_venta": venta.ticket_id if venta else pedido.id,
+        "fecha": str(venta.date) if venta else "",
+        "hora": str(venta.hour) if venta else "",
+        "cliente": cliente,
+        "mesa": mesa,
+        "mesero": mesero,
+        "items": items,
+        "total": venta.total_paid if venta else sum(i["importe"] for i in items),
+        "estado": pedido.status
     }
