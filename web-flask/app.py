@@ -87,6 +87,7 @@ def dashboard():
     headers = {"Authorization": f"Bearer {session['token']}"}
     kpis = {"sales_today": 0.0, "active_orders_count": 0, "total_products": 0, "total_users": 0}
     pedidos_activos = []
+    alertas = []
     
     try:
         kpi_resp = requests.get(f"{API_URL}/estadisticas/dashboard-kpis", headers=headers)
@@ -110,7 +111,6 @@ def dashboard():
             pedidos_activos = [p for p in all_pedidos if p['status'] != 'PAGADO']
             
         # 3. Obtener alertas de cocina
-        alertas = []
         alertas_resp = requests.get(f"{API_URL}/alertas?unread_only=true", headers=headers)
         if alertas_resp.status_code == 200:
             alertas = alertas_resp.json()
@@ -245,6 +245,7 @@ def crear_producto():
     price = float(request.form.get('price', 0))
     category_id = int(request.form.get('category_id', 0))
     status_id = int(request.form.get('status_id', 1))
+    stock = int(request.form.get('stock', 50))
     photo = request.form.get('photo') or None
     
     try:
@@ -253,6 +254,7 @@ def crear_producto():
             "price": price,
             "category_id": category_id,
             "status_id": status_id,
+            "stock": stock,
             "photo": photo
         }
         resp = requests.post(f"{API_URL}/productos", json=payload, headers=headers)
@@ -273,6 +275,7 @@ def editar_producto(id):
     price = request.form.get('price')
     category_id = request.form.get('category_id')
     status_id = request.form.get('status_id')
+    stock = request.form.get('stock')
     photo = request.form.get('photo') or None
 
     payload = {}
@@ -280,6 +283,7 @@ def editar_producto(id):
     if price: payload["price"] = float(price)
     if category_id: payload["category_id"] = int(category_id)
     if status_id: payload["status_id"] = int(status_id)
+    if stock is not None: payload["stock"] = int(stock)
     if photo: payload["photo"] = photo
 
     try:

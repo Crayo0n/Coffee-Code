@@ -61,6 +61,7 @@
             <th>Producto</th>
             <th>Categoría</th>
             <th>Precio</th>
+            <th>Stock</th>
             <th>Disponibilidad</th>
             <th style="text-align: right;">Acciones</th>
           </tr>
@@ -89,6 +90,7 @@
                 </span>
               </td>
               <td style="font-weight: 700; color: #4e6b62;">${{ "%.2f"|format(product.price) }}</td>
+              <td style="font-weight: 600; color: var(--color-dark);">{{ product.stock if product.stock is not none else 0 }}</td>
               <td>
                 {% if product.estado and product.estado.name == 'disponible' %}
                   <span class="status-badge status-active">DISPONIBLE</span>
@@ -99,7 +101,7 @@
               <td style="text-align: right; white-space: nowrap;">
                 {% set product_photo = product.photo or '' %}
                 <button class="btn-icon" style="color: var(--color-primary); vertical-align: middle;" title="Editar Producto"
-                  onclick="openEditProductModal('{{ product.id }}', '{{ product.name }}', '{{ product.price }}', '{{ product.category_id if product.category_id else 0 }}', '{{ product.status_id if product.status_id else 1 }}', '{{ product_photo }}')">
+                  onclick="openEditProductModal('{{ product.id }}', '{{ product.name }}', '{{ product.price }}', '{{ product.stock if product.stock is not none else 0 }}', '{{ product.category_id if product.category_id else 0 }}', '{{ product.status_id if product.status_id else 1 }}', '{{ product_photo }}')">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
@@ -163,6 +165,11 @@
           <div class="form-group">
             <label for="newProductPrice">Precio de Venta ($)</label>
             <input type="number" step="0.01" id="newProductPrice" name="price" placeholder="Ej: 45.00" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="newProductStock">Stock Inicial</label>
+            <input type="number" id="newProductStock" name="stock" placeholder="Ej: 50" required>
           </div>
         </div>
 

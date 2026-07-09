@@ -1,8 +1,18 @@
 from sqlalchemy.orm import Session
-from .database import SessionLocal
+from sqlalchemy import text
+from .database import SessionLocal, engine
 from .. import models, security
 
 def seed_database():
+    # Aplicar migraciones manuales en caso de bases de datos pre-existentes
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 50;"))
+            conn.execute(text("ALTER TABLE productos ADD COLUMN IF NOT EXISTS description VARCHAR(255);"))
+            conn.commit()
+    except Exception as e:
+        print(f"Migraciones ignoradas o fallidas: {e}")
+
     db = SessionLocal()
     try:
         # 1. Poblar Roles si está vacío

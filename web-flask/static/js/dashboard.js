@@ -203,7 +203,7 @@ function openProductModal() {
   if (overlay) overlay.classList.add("active");
 }
 
-function openEditProductModal(id, name, price, categoryId, statusId, photo) {
+function openEditProductModal(id, name, price, stock, categoryId, statusId, photo) {
   const overlay = document.getElementById("productModalOverlay");
   const form = document.getElementById("productRegisterForm");
   const titleText = document.getElementById("modalProductTitleText");
@@ -216,6 +216,7 @@ function openEditProductModal(id, name, price, categoryId, statusId, photo) {
   // Fill fields
   document.getElementById("newProductName").value = name;
   document.getElementById("newProductPrice").value = price;
+  document.getElementById("newProductStock").value = stock;
   const catSelect = document.getElementById("newProductCategory");
   if (catSelect) catSelect.value = categoryId;
   const statusSelect = document.getElementById("newProductStatus");
